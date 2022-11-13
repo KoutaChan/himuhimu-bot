@@ -33,8 +33,8 @@ public class FileUtil {
                     key.put(split[0], split[1]);
                 }
             });
-        } catch (IOException ignore) {
-            //e.printStackTrace();
+        } catch (IOException ex) {
+            ex.printStackTrace();
         }
         return key;
     }

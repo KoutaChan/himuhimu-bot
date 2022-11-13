@@ -1,8 +1,9 @@
 package xyz.n7mn.dev;
 
 import net.dv8tion.jda.api.entities.AudioChannel;
-import net.dv8tion.jda.api.entities.ChannelType;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.VoiceChannel;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -11,17 +12,9 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.managers.AudioManager;
 import org.jetbrains.annotations.NotNull;
-import xyz.n7mn.dev.buttonprocessor.ButtonManager;
-import xyz.n7mn.dev.command.other.VoiceRoidStartCommand;
-import xyz.n7mn.dev.commandprocessor.CommandManager;
-import xyz.n7mn.dev.commandprocessor.DiscordData;
-import xyz.n7mn.dev.commandprocessor.VoiceEnum;
-import xyz.n7mn.dev.util.CasinoManager;
+import xyz.n7mn.dev.message.MessageListeners;
 import xyz.n7mn.dev.util.DiscordUtil;
 import xyz.n7mn.dev.yomiage.data.TextChannelData;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class EventListener extends ListenerAdapter {
 
@@ -44,7 +37,6 @@ public class EventListener extends ListenerAdapter {
             }
 
             if (count == 0 || e.getMember().getIdLong() == e.getJDA().getSelfUser().getIdLong()) {
-
                 DiscordUtil.stop(e.getGuild());
             }
         } else if (e.getMember().getIdLong() == e.getJDA().getSelfUser().getIdLong()) {
@@ -56,16 +48,14 @@ public class EventListener extends ListenerAdapter {
     @Override
     public void onGuildVoiceMove(@NotNull GuildVoiceMoveEvent e) {
         if (e.getGuild().getAudioManager().isConnected()) {
-
-            run(e, e.getNewValue());
-            run(e, e.getOldValue());
-
+            checkNonPlayer(e.getGuild(), e.getNewValue());
+            checkNonPlayer(e.getGuild(), e.getOldValue());
         } else if (e.getMember().getIdLong() == e.getJDA().getSelfUser().getIdLong()) {
             DiscordUtil.stop(e.getGuild());
         }
     }
 
-    private void run(GuildVoiceMoveEvent e, AudioChannel audioChannel) {
+    private void checkNonPlayer(final Guild guild, AudioChannel audioChannel) {
         int count = 0;
 
         for (Member member : audioChannel.getMembers()) {
@@ -76,10 +66,10 @@ public class EventListener extends ListenerAdapter {
             count++;
         }
 
-        final AudioChannel connectedChannel = e.getGuild().getAudioManager().getConnectedChannel();
+        final AudioChannel connectedChannel = guild.getAudioManager().getConnectedChannel();
 
         if (connectedChannel != null && connectedChannel.getIdLong() == audioChannel.getIdLong() && count == 0) {
-            DiscordUtil.stop(e.getGuild());
+            DiscordUtil.stop(guild);
         }
     }
 
@@ -96,7 +86,11 @@ public class EventListener extends ListenerAdapter {
             return;
         }
 
-        CommandManager.execute(event);
+        MessageListeners.getListeners().forEach(v -> {
+            v.onMessageReceivedEvent(event);
+        });
+
+        /*CommandManager.execute(event);
         if (event.isFromGuild() && event.isFromType(ChannelType.TEXT)) {
             CasinoManager.getCasinoData(event.getGuild().getId(), event.getMember().getId())
                     .update(1);
@@ -123,7 +117,7 @@ public class EventListener extends ListenerAdapter {
                     }
                 }
             }
-        }
+        }*/
     }
 
     @Override

@@ -49,8 +49,6 @@ public class TrackScheduler extends AudioEventAdapter {
                 new Thread(() -> track.getNicoVideo().heart_beat()).start();
             }
             audioTrack = track;
-
-            System.out.printf("新しいミュージックを再生します: %s ミュージックタイプ:%s%n", track.getTitle(), track.getMusicType());
         } else {
             queue.offer(track);
         }
@@ -86,15 +84,11 @@ public class TrackScheduler extends AudioEventAdapter {
         } else {
             player.getAudioPlayer().startTrack(audioTrack.getAudioTrack(), false);
         }
-
-        System.out.printf("新しいミュージックを再生します: %s ミュージックタイプ:%s%n", audioTrack.getTitle(), audioTrack.getMusicType());
     }
 
     public void nextTrack(AudioTrackData audioTrack) {
         this.audioTrack = audioTrack;
         player.getAudioPlayer().startTrack(audioTrack.getAudioTrack().makeClone(), false);
-
-        System.out.printf("ミュージックをリピートします: %s ミュージックタイプ:%s%n", audioTrack.getTitle(), audioTrack.getMusicType());
     }
 
 

@@ -79,10 +79,10 @@ public class EarthQuakeYahooMonitor {
 
     private long lastPing;
 
-    private final JDA INSTANCE;
+    private final JDA JDA;
 
-    public EarthQuakeYahooMonitor(JDA INSTANCE) {
-        this.INSTANCE = INSTANCE;
+    public EarthQuakeYahooMonitor(JDA JDA) {
+        this.JDA = JDA;
 
         try {
             positions = new JSONObject(new String(IOUtils.toByteArray(this.getClass().getResourceAsStream("/earthquake_area_data.json")), StandardCharsets.UTF_8));
@@ -121,10 +121,8 @@ public class EarthQuakeYahooMonitor {
             final boolean isEarthQuake = !jsonObject.isNull("hypoInfo");
 
             if (isEarthQuake) {
-
                 JSONObject realTimeData = jsonObject.getJSONObject("realTimeData");
                 String intensity = realTimeData.getString("intensity");
-
 
                 byte[] bytes = intensity.getBytes(StandardCharsets.UTF_8);
                 getData(map != null && bytes.length == map.length());
@@ -230,10 +228,8 @@ public class EarthQuakeYahooMonitor {
             reportIds.add(reportId);
 
             if (!messages.containsKey(reportId)) {
-
                 EarthQuakeUtilities.setResultData(new ResultData(builder, builder, file, false));
-                sendToDiscord(INSTANCE, file, message -> messages.put(reportId, message));
-
+                sendToDiscord(JDA, file, message -> messages.put(reportId, message));
             } else if (isUpdate()) {
                 Iterator<Message> it = messages.get(reportId).iterator();
 
@@ -391,55 +387,47 @@ public class EarthQuakeYahooMonitor {
 
     public String getSindo(int si) {
         switch (si) {
-            case 20: {
+            case 20 -> {
                 return "7";
             }
-            case 19: {
+            case 19 -> {
                 return "6+";
             }
-            case 18: {
+            case 18 -> {
                 return "6-";
             }
-            case 17: {
+            case 17 -> {
                 return "5+";
             }
-            case 16: {
+            case 16 -> {
                 return "5-";
             }
-            case 15:
-            case 14: {
+            case 15, 14 -> {
                 return "4";
             }
-            case 13:
-            case 12: {
+            case 13, 12 -> {
                 return "3";
             }
-            case 11:
-            case 10: {
+            case 11, 10 -> {
                 return "2";
             }
-            case 9:
-            case 8:
-            case 7: {
+            case 9, 8, 7 -> {
                 return "1";
             }
-            case 6:
-            case 5:
-            case 4:
-            case 3: {
+            case 6, 5, 4, 3 -> {
                 return "0";
             }
-            case 2: {
+            case 2 -> {
                 return "-1";
             }
-            case 1: {
+            case 1 -> {
                 return "-2";
             }
-            case 0: {
+            case 0 -> {
                 return "-3";
             }
-            default: {
-                return "Invalid/Unknown";
+            default -> {
+                return "??? / 不明な震度";
             }
         }
     }

@@ -90,37 +90,15 @@ public class EarthQuakeUtilities {
 
     public static void changeColor(EmbedBuilder embedBuilder, String sindo) {
         switch (sindo) {
-            case "7":
-                embedBuilder.setColor(Color.decode("#71368A"));
-                break;
-            case "6+":
-            case "6強":
-                embedBuilder.setColor(Color.decode("#992D22"));
-                break;
-            case "6-":
-            case "6弱":
-                embedBuilder.setColor(Color.decode("#E74C3C"));
-                break;
-            case "5+":
-            case "5強":
-                embedBuilder.setColor(Color.decode("#A84300"));
-                break;
-            case "5-":
-            case "5弱":
-                embedBuilder.setColor(Color.decode("#E67E22"));
-                break;
-            case "4":
-                embedBuilder.setColor(Color.YELLOW);
-                break;
-            case "3":
-                embedBuilder.setColor(Color.BLUE);
-                break;
-            case "2":
-                embedBuilder.setColor(Color.decode("#3498DB"));
-                break;
-            default:
-                embedBuilder.setColor(Color.WHITE);
-                break;
+            case "7" -> embedBuilder.setColor(Color.decode("#71368A"));
+            case "6+", "6強" -> embedBuilder.setColor(Color.decode("#992D22"));
+            case "6-", "6弱" -> embedBuilder.setColor(Color.decode("#E74C3C"));
+            case "5+", "5強" -> embedBuilder.setColor(Color.decode("#A84300"));
+            case "5-", "5弱" -> embedBuilder.setColor(Color.decode("#E67E22"));
+            case "4" -> embedBuilder.setColor(Color.YELLOW);
+            case "3" -> embedBuilder.setColor(Color.BLUE);
+            case "2" -> embedBuilder.setColor(Color.decode("#3498DB"));
+            default -> embedBuilder.setColor(Color.WHITE);
         }
     }
 

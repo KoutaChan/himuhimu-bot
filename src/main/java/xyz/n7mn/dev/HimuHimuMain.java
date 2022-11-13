@@ -9,21 +9,24 @@ import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import xyz.n7mn.dev.commandprocessor.Command;
 import xyz.n7mn.dev.commandprocessor.CommandManager;
 import xyz.n7mn.dev.commandprocessor.CommandName;
+import xyz.n7mn.dev.commands.CommandManager;
 import xyz.n7mn.dev.earthquake.EarthQuakeYahoo;
 import xyz.n7mn.dev.earthquake.EarthQuakeYahooMonitor;
+import xyz.n7mn.dev.message.MessageListener;
+import xyz.n7mn.dev.message.MessageListeners;
+import xyz.n7mn.dev.message.common.AddCoinManager;
 import xyz.n7mn.dev.util.ConfigManager;
 
 import java.nio.file.Paths;
 
 public class HimuHimuMain {
-
     public static ConfigManager configManager = new ConfigManager("config.properties", Paths.get("", "config.properties").toAbsolutePath());
 
     public static EarthQuakeYahooMonitor earthQuakeYahooMonitor;
 
     public static void main(String[] args) {
         try {
-            JDA build = JDABuilder.createLight(configManager.getString("discord.token"), GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MEMBERS, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_PRESENCES, GatewayIntent.GUILD_EMOJIS_AND_STICKERS)
+            JDA instance = JDABuilder.createLight(configManager.getString("discord.token"), GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MEMBERS, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_PRESENCES, GatewayIntent.GUILD_EMOJIS_AND_STICKERS)
                     .addEventListeners(new EventListener())
                     .enableCache(CacheFlag.VOICE_STATE)
                     //.enableCache(CacheFlag.EMOTE)
@@ -31,19 +34,16 @@ public class HimuHimuMain {
                     .setActivity(Activity.playing("h.help all"))
                     .build();
 
-            for (Class<? extends Command> command : CommandManager.command) {
-                CommandName annotation = command.getAnnotation(CommandName.class);
-
-                System.out.println("コマンド: " + annotation.command()[0]);
-            }
+            //Listeners
+            MessageListeners.addListener(new CommandManager(), new AddCoinManager());
 
             //Start
             if (configManager.getBoolean("enable.earthquake")) {
-                EarthQuakeYahoo.start(build);
+                EarthQuakeYahoo.start(instance);
             }
 
             if (configManager.getBoolean("enable.earthquake.nied")) {
-                earthQuakeYahooMonitor = new EarthQuakeYahooMonitor(build);
+                earthQuakeYahooMonitor = new EarthQuakeYahooMonitor(instance);
                 earthQuakeYahooMonitor.startNewThread();
             }
         } catch (Exception e) {
