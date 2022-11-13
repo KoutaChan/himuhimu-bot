@@ -1,12 +1,5 @@
 package xyz.n7mn.dev;
 
-import net.dv8tion.jda.api.entities.AudioChannel;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.VoiceChannel;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
-import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -14,12 +7,13 @@ import net.dv8tion.jda.api.managers.AudioManager;
 import org.jetbrains.annotations.NotNull;
 import xyz.n7mn.dev.message.MessageListeners;
 import xyz.n7mn.dev.util.DiscordUtil;
-import xyz.n7mn.dev.yomiage.data.TextChannelData;
 
 public class EventListener extends ListenerAdapter {
+    /*@Override
+    public void onGuildVoiceUpdate(@NotNull GuildVoiceUpdateEvent e) {
+        e.getNewValue()
 
-    @Override
-    public void onGuildVoiceLeave(@NotNull GuildVoiceLeaveEvent e) {
+        GuildVoice
         AudioManager audioManager = e.getGuild().getAudioManager();
         if (audioManager.isConnected()) {
             AudioChannel audioChannel = audioManager.getConnectedChannel();
@@ -78,7 +72,7 @@ public class EventListener extends ListenerAdapter {
         if (event.isFromGuild()) {
             ButtonManager.execute(event);
         }
-    }
+    }*/
 
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {

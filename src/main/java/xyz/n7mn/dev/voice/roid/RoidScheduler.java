@@ -15,7 +15,12 @@ public class RoidScheduler extends AudioListener {
     }
 
     @Override
-    public void loadPlay(AudioTrack track) {
+    public void load(AudioTrack track) {
+
+    }
+
+    @Override
+    public void searchAndPlay(String url) {
 
     }
 

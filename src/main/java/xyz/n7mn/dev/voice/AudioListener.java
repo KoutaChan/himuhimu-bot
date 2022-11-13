@@ -7,8 +7,8 @@ import lombok.Getter;
 
 @Getter
 public abstract class AudioListener extends AudioEventAdapter {
-    private final AudioPlayer player;
-    private AudioTrack track;
+    protected final AudioPlayer player;
+    protected AudioTrack track;
 
     public AudioListener(AudioPlayer player) {
         this.player = player;
@@ -16,7 +16,9 @@ public abstract class AudioListener extends AudioEventAdapter {
 
     public abstract void queue(AudioTrack track);
 
-    public abstract void loadPlay(AudioTrack track);
+    public abstract void load(AudioTrack track);
+
+    public abstract void searchAndPlay(String url);
 
     public abstract void exit();
 }

@@ -3,10 +3,9 @@ package xyz.n7mn.dev.music;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.Nullable;
 import xyz.n7mn.dev.music.custom.BiliBiliVideo;
 import xyz.n7mn.dev.music.custom.NicoVideo;
-
-import javax.annotation.Nullable;
 
 @Getter @Setter
 public class AudioTrackData {

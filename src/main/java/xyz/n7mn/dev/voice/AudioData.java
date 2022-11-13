@@ -4,8 +4,8 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import lombok.Getter;
 import lombok.Setter;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.TextChannel;
-import net.dv8tion.jda.api.entities.VoiceChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import xyz.n7mn.dev.music.MusicManager;
 import xyz.n7mn.dev.sqlite.MusicDB;
 import xyz.n7mn.dev.sqlite.SQLite;
@@ -32,6 +32,8 @@ public class AudioData {
         this.listener = getTypeAudio(type, player);
         this.audioChannel = audioChannel;
         this.data = SQLite.INSTANCE.getMusic().get(guild.getId());
+
+        guild.getAudioManager().openAudioConnection(audioChannel);
     }
 
 
@@ -52,12 +54,13 @@ public class AudioData {
 
     public static AudioListener getTypeAudio(AudioType type, AudioPlayer player) {
         if (type == AudioType.MUSIC) {
-            return new MusicScheduler(player);
+            return new MusicScheduler(AudioManager.getAudioManager(), player);
         }
         return null;
     }
 
     public void remove() {
+        guild.getAudioManager().closeAudioConnection();
         AudioManager.removeAudio(guild);
     }
 }

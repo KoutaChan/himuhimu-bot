@@ -4,7 +4,8 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.utils.FileUpload;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -236,9 +237,7 @@ public class EarthQuakeYahooMonitor {
                 while (it.hasNext()) {
                     try {
                         it.next().editMessageEmbeds(builder.build())
-                                .override(true)
-                                .clearFiles()
-                                .addFile(file, "earthquake.png")
+                                .setFiles(FileUpload.fromData(file, "earthquake.png"))
                                 .queue();
                     } catch (Exception ex) {
                         it.remove();
@@ -284,7 +283,7 @@ public class EarthQuakeYahooMonitor {
 
             if (textChannel != null && textChannel.canTalk()) {
                 messages.add(textChannel.sendMessageEmbeds(EarthQuakeUtilities.getResultData().getEmbedBuilder().build())
-                        .addFile(file, "earthquake.png")
+                        .addFiles(FileUpload.fromData(file, "earthquake.png"))
                         .complete());
             }
         });

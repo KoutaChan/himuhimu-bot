@@ -6,9 +6,8 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.TextChannel;
-import net.dv8tion.jda.api.requests.restaction.MessageAction;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.utils.FileUpload;
 import xyz.n7mn.dev.sqlite.SQLite;
 import xyz.n7mn.dev.earthquake.data.ResultData;
 
@@ -57,7 +56,7 @@ public class EarthQuakeUtilities {
 
                     if (textChannel != null && textChannel.canTalk()) {
                         messages.add(textChannel.sendMessageEmbeds(EarthQuakeUtilities.getResultData().getTemp().build())
-                                .addFile(gif, "earthquake.gif")
+                                .addFiles(FileUpload.fromData(gif, "earthquake.gif"))
                                 .complete());
                     }
                 });
@@ -76,9 +75,7 @@ public class EarthQuakeUtilities {
             while (it.hasNext()) {
                 try {
                     it.next().editMessageEmbeds(embedBuilder.build())
-                            .override(true)
-                            .clearFiles()
-                            .addFile(gif, "earthquake.gif")
+                            .setFiles(FileUpload.fromData(gif, "earthquake.gif"))
                             .queue();
                 } catch (Exception ex) {
                     it.remove();
