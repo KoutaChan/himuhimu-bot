@@ -6,6 +6,7 @@ import lombok.Setter;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
+import xyz.n7mn.dev.music.AudioHandler;
 import xyz.n7mn.dev.music.MusicManager;
 import xyz.n7mn.dev.sqlite.MusicDB;
 import xyz.n7mn.dev.sqlite.SQLite;
@@ -23,6 +24,7 @@ public class AudioData {
     private AudioListener listener;
     private VoiceChannel audioChannel;
     private SQLiteMusicData data;
+    private AudioHandler handler;
 
     public AudioData(AudioType type, TextChannel textChannel, VoiceChannel audioChannel) {
         this.type = type;
@@ -32,10 +34,13 @@ public class AudioData {
         this.listener = getTypeAudio(type, player);
         this.audioChannel = audioChannel;
         this.data = SQLite.INSTANCE.getMusic().get(guild.getId());
+        this.handler = new AudioHandler(player);
+
+        player.addListener(listener);
 
         guild.getAudioManager().openAudioConnection(audioChannel);
+        guild.getAudioManager().setSendingHandler(handler);
     }
-
 
     public boolean setVolume(final int volume) {
         if (volume < 0) {

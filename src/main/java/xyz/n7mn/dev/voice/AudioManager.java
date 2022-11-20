@@ -13,6 +13,7 @@ import lombok.Getter;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
+import xyz.n7mn.dev.voice.provider.nico.HimuNicoAudioSourceManager;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -24,14 +25,16 @@ public class AudioManager {
     public static final AudioPlayerManager manager = new DefaultAudioPlayerManager();
 
     static {
+        manager.registerSourceManager(new HimuNicoAudioSourceManager());
         AudioSourceManagers.registerLocalSource(manager);
         AudioSourceManagers.registerRemoteSources(manager);
     }
 
     private final static Map<Long, AudioData> audio = new HashMap<>();
 
-    public void createAudio(AudioType type, TextChannel textChannel, VoiceChannel channel) {
+    public static AudioData createAudio(AudioType type, TextChannel textChannel, VoiceChannel channel) {
         audio.put(textChannel.getGuild().getIdLong(), new AudioData(type, textChannel, channel));
+        return getAudio(textChannel.getGuild());
     }
 
     public static AudioData getAudio(Guild guild) {
