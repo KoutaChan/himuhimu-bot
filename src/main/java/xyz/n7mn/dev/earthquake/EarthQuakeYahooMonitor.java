@@ -18,6 +18,7 @@ import xyz.n7mn.dev.util.pair.Pair;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.ImageObserver;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -61,7 +62,7 @@ public class EarthQuakeYahooMonitor {
     public static Color BACKGROUND_COLOR = Color.decode("#343434");
 
     private JSONObject positions;
-    private BufferedImage base;
+    private BufferedImage base, hypo;
 
     private boolean synced = true;
     private JSONArray map;
@@ -89,6 +90,7 @@ public class EarthQuakeYahooMonitor {
             positions = new JSONObject(new String(IOUtils.toByteArray(this.getClass().getResourceAsStream("/earthquake_area_data.json")), StandardCharsets.UTF_8));
 
             base = ImageIO.read(this.getClass().getResourceAsStream("/base.png"));
+            hypo = ImageIO.read(this.getClass().getResourceAsStream("/hypo.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -102,6 +104,8 @@ public class EarthQuakeYahooMonitor {
     public void execute() {
         Date date = lastPing != 0 ? retry > 1
                 ? new Date(lastPing) : new Date(lastPing + 1000L)
+                //Sindo 4 Image 2022/11/09 17:40
+                //: new Date(1667983225000L);
                 : new Date(ZonedDateTime.ofInstant(Instant.now(), ZoneId.of("Asia/Tokyo")).toInstant().toEpochMilli());
 
         try {
@@ -113,7 +117,6 @@ public class EarthQuakeYahooMonitor {
             String seconds = formatSeconds.format(date);
 
             String requests = "https://weather-kyoshin.west.edge.storage-yahoo.jp/RealTimeData/%s/%s.json";
-            //String requests = "https://weather-kyoshin.west.edge.storage-yahoo.jp/RealTimeData/20210213/20210213230833.json";
             Document document = Jsoup.connect(String.format(requests, days, seconds))
                     .ignoreContentType(true)
                     .get();
@@ -136,7 +139,7 @@ public class EarthQuakeYahooMonitor {
                 Map<Pair<Double, Double>, Integer> hashMap = new HashMap<>();
 
                 //PS WAVE
-                checkPSWave(jsonObject, g2d);
+                writePSWave(bufferedImage, jsonObject);
 
                 for (int i = 0; i < map.length(); i++) {
                     //ヤフーリアルタイムモニタの色の表示方法は byteを -100したときに残った数字です。
@@ -161,6 +164,7 @@ public class EarthQuakeYahooMonitor {
                 for (Map.Entry<Pair<Double, Double>, Integer> entry : entries) {
                     write(g2d, entry.getKey(), entry.getValue());
                 }
+                writeHypoLocation(g2d, jsonObject);
 
                 g2d.dispose();
 
@@ -169,7 +173,7 @@ public class EarthQuakeYahooMonitor {
                 earthQuakeEvent(isEarthQuake, v -> checkMessage(jsonObject, finalImage));
 
                 //debug
-                ImageIO.write(finalImage, "png", Paths.get("", "test" + finalImage.hashCode() + ".png").toFile());
+                ImageIO.write(finalImage, "png", Paths.get("", "test-" + date.getTime() + ".png").toFile());
             } else {
                 earthQuakeEvent(isEarthQuake, null);
             }
@@ -337,7 +341,7 @@ public class EarthQuakeYahooMonitor {
 
                 drawLine(g2dInformation, Color.GRAY, startingPos, y - 25, startingPos, y + 100);
 
-                g2dInformation.drawString(String.format("震源地 >>> %s (第%s報)", item.getString("regionName"), getReportNum(item)), x, y);
+                g2dInformation.drawString(String.format("震源地 >>> %s (%s報)", item.getString("regionName"), getReportNum(item)), x, y);
                 g2dInformation.drawString(String.format("予測震度 >>> %s (M %s)", item.getString("calcintensity"), item.getString("magnitude")), x, 25 + y);
                 g2dInformation.drawString("予想深さ >>> " + item.getString("depth"), x, 50 + y);
                 g2dInformation.drawString((item.getBoolean("isCancel") ? "この地震速報はキャンセルされました" : "この地震速報はキャンセルされていません"), x, 85 + y);
@@ -379,7 +383,7 @@ public class EarthQuakeYahooMonitor {
     }
 
     public String getReportNum(JSONObject object) {
-        return object.getBoolean("isFinal") ? "最終" : object.getString("reportNum");
+        return object.getBoolean("isFinal") ? "最終" : "第" + object.getString("reportNum");
     }
 
     public String getSindo(int si) {
@@ -440,7 +444,7 @@ public class EarthQuakeYahooMonitor {
     //left lng=116.45558291793395
     //right lng=153.74441708206723
     //bottom lat=23.64048885571455
-    public void checkPSWave(JSONObject object, Graphics2D graphics2D) {
+    public void writePSWave(BufferedImage bufferedImage, JSONObject object) {
         JSONObject psWave = object.optJSONObject("psWave");
 
         if (psWave != null) {
@@ -455,10 +459,39 @@ public class EarthQuakeYahooMonitor {
                 final int pRadius = (int) Double.parseDouble(item.getString("pRadius"));
                 final int sRadius = (int) Double.parseDouble(item.getString("sRadius"));
 
+                Graphics2D graphics2D = bufferedImage.createGraphics();
+
+                graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                graphics2D.setColor(new Color(255, 0, 0, 50));
+                graphics2D.fillOval(pixelXY.getKey().intValue() - (sRadius / 2), pixelXY.getValue().intValue() - (sRadius / 2), sRadius, sRadius);
                 graphics2D.setColor(Color.RED);
                 graphics2D.drawOval(pixelXY.getKey().intValue() - (sRadius / 2), pixelXY.getValue().intValue() - (sRadius / 2), sRadius, sRadius);
+
+                graphics2D.setColor(new Color(0, 0, 255, 50));
+                graphics2D.fillOval(pixelXY.getKey().intValue() - (pRadius / 2), pixelXY.getValue().intValue() - (pRadius / 2), pRadius, pRadius);
                 graphics2D.setColor(Color.BLUE);
                 graphics2D.drawOval(pixelXY.getKey().intValue() - (pRadius / 2), pixelXY.getValue().intValue() - (pRadius / 2), pRadius, pRadius);
+
+                /*graphics2D.drawImage(hypo, pixelXY.getKey().intValue() - (hypo.getWidth() / 2), pixelXY.getValue().intValue() - (hypo.getHeight() / 2), null);*/
+                graphics2D.dispose();
+            }
+        }
+    }
+
+    public void writeHypoLocation(Graphics2D graphics2D, JSONObject object) {
+        JSONObject psWave = object.optJSONObject("psWave");
+
+        if (psWave != null) {
+            JSONArray items = psWave.getJSONArray("items");
+
+            for (int i = 0; i < items.length(); i++) {
+                JSONObject item = items.getJSONObject(i);
+
+                Pair<Double, Double> pixelXY = convertGeoToPixel(Double.parseDouble(item.getString("latitude").replaceAll("N", "")), Double.parseDouble(item.getString("longitude").replaceAll("E", ""))
+                        , 1200, 900, 116.45558291796095, 153.74441708208371, 23.640487987015774);
+
+                //Hypo Location
+                graphics2D.drawImage(hypo, pixelXY.getKey().intValue() - (hypo.getWidth() / 2), pixelXY.getValue().intValue() - (hypo.getHeight() / 2), null);
             }
         }
     }
@@ -531,9 +564,6 @@ public class EarthQuakeYahooMonitor {
             e.printStackTrace();
         }
     }
-
-
-
 
     /**
      * THANK YOU

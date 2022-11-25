@@ -39,6 +39,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLSyntaxErrorException;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -52,6 +53,9 @@ public class HimuNicoAudioSourceManager implements AudioSourceManager, HttpConfi
     private static final String TRACK_URL_REGEX = "^(?:http://|https://|)(?:www\\.|)nicovideo\\.jp/watch/((so|sm)[0-9]+)(?:\\?.*|)$";
     private static final Pattern trackUrlPattern = Pattern.compile(TRACK_URL_REGEX);
 
+    private static final String MY_LIST_URL_REGEX = "^(?:http://|https://|)(?:www\\.|)nicovideo\\.jp/user/([0-9]+)/mylist/([0-9]+)(?:\\?.*|)$";
+    private static final Pattern myListUrlPattern = Pattern.compile(MY_LIST_URL_REGEX);
+
     public HimuNicoAudioSourceManager() {
         System.out.println("registered");
     }
@@ -62,7 +66,7 @@ public class HimuNicoAudioSourceManager implements AudioSourceManager, HttpConfi
     }
 
     public static void main(String[] args) {
-        JDA instance = JDABuilder.createLight("ODMxNzA4OTA2OTcwNTQ2MjA2.GicCbP.geRnl9tyjYjIZMpsNYSwHmZjdr0JCT0IndjwdQ", GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MEMBERS, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_PRESENCES, GatewayIntent.GUILD_EMOJIS_AND_STICKERS)
+        JDA instance = JDABuilder.createLight("token", GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MEMBERS, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_PRESENCES, GatewayIntent.GUILD_EMOJIS_AND_STICKERS)
                 .addEventListeners(new EventListener())
                 .enableCache(CacheFlag.VOICE_STATE)
                 //.enableCache(CacheFlag.EMOTE)
@@ -80,7 +84,7 @@ public class HimuNicoAudioSourceManager implements AudioSourceManager, HttpConfi
                 AudioManager.manager.loadItem("https://www.nicovideo.jp/watch/sm41087797", new AudioLoadResultHandler() {
                     @Override
                     public void trackLoaded(AudioTrack track) {
-                        System.out.println("TRADCK*");
+                        System.out.println("TRACK*");
 
                         data.getListener().load(track);
                         data.getListener().queue(track);
@@ -126,8 +130,33 @@ public class HimuNicoAudioSourceManager implements AudioSourceManager, HttpConfi
 
         if (trackMatcher.matches()) {
             return loadTrack(trackMatcher.group(1));
-        }
+        }/* else {
+            Matcher myListMatcher = myListUrlPattern.matcher(reference.identifier);
 
+            if (myListMatcher.matches()) {
+                loadMyList(reference.identifier);
+            }
+        }*/
+
+        return null;
+    }
+
+    public AudioTrack loadMyList(String link) {
+        try (HttpInterface httpInterface = getHttpInterface()) {
+            try (CloseableHttpResponse response = checkStatusCode(httpInterface.execute(new HttpGet(link)))) {
+                Document document = Jsoup.parse(response.getEntity().getContent(), StandardCharsets.UTF_8.name(), "", Parser.xmlParser());
+
+                //List<AudioTrack> tracks = getAllTrack(document.getElementById("ContinuousPlayButton MylistMenu-continuous").attr("href"));
+
+                System.out.println(document.getElementById("js-initial-userpage-data").attr("data-environment"));
+            }
+        } catch (IOException e) {
+            throw new FriendlyException("Error occurred when extracting video info.", SUSPICIOUS, e);
+        }
+        return null;
+    }
+
+    public List<AudioTrack> getAllTrack(String url) {
         return null;
     }
 

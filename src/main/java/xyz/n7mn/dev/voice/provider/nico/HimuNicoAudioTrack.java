@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
@@ -171,7 +172,7 @@ public class HimuNicoAudioTrack extends DelegatedAudioTrack {
     @Override
     public void stop() {
         super.stop();
-        System.out.println("STOPED");
+        System.out.println("stopping");
         stopKeepAlive();
     }
 
