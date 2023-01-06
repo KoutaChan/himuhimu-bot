@@ -258,7 +258,7 @@ public class EarthQuakeYahooMonitor {
             }
         }
 
-        //remove if ended (todo: support gif)
+        //remove if ended (todo: support gif) サイズが足りなくで挫折
         messages.keySet().stream().filter(key -> reportIds.stream().noneMatch(key::equalsIgnoreCase))
                 .forEach(messages::remove);
     }

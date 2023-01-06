@@ -74,8 +74,6 @@ public class HimuNicoAudioSourceManager implements AudioSourceManager, HttpConfi
                 .setActivity(Activity.playing("h.help all"))
                 .build();
 
-
-
         new Thread(() -> {
             try {
                 Thread.sleep(3000L);

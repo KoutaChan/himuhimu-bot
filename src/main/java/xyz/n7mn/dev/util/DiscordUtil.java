@@ -3,8 +3,6 @@ package xyz.n7mn.dev.util;
 import lombok.experimental.UtilityClass;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
-import xyz.n7mn.dev.music.AudioTrackData;
-import xyz.n7mn.dev.music.MusicManager;
 import xyz.n7mn.dev.voice.AudioData;
 import xyz.n7mn.dev.voice.AudioManager;
 

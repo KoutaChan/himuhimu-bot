@@ -5,7 +5,6 @@ import xyz.n7mn.dev.sqlite.SQLite;
 
 @Getter
 public class SQLiteMusicData {
-
     private final String guildId;
     private int defaultVolume;
     private int maxVolume;

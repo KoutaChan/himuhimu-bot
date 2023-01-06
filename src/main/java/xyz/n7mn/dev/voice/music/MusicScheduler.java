@@ -40,7 +40,7 @@ public class MusicScheduler extends AudioListener {
     }
 
     public void queue(AudioTrackData data) {
-        boolean started = player.startTrack(track, true);
+        boolean started = player.startTrack(data.track(), true);
 
         if (!started) {
             this.track = data.getTrack();

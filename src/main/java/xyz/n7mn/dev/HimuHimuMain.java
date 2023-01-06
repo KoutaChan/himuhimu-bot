@@ -1,5 +1,7 @@
 package xyz.n7mn.dev;
 
+import me.koply.kcommando.KCommando;
+import me.koply.kcommando.integration.impl.jda.JDAIntegration;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -23,28 +25,45 @@ public class HimuHimuMain {
 
     public static void main(String[] args) {
         try {
-            JDA instance = JDABuilder.createLight(configManager.getString("discord.token"), GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MEMBERS, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_PRESENCES, GatewayIntent.GUILD_EMOJIS_AND_STICKERS)
+            JDA jda = JDABuilder.createDefault(configManager.getString("discord.token"), GatewayIntent.GUILD_MESSAGES)
+                    .addEventListeners(new EventListener())
+                    .setActivity(Activity.playing("h.help all"))
+                    .build();
+            jda.awaitReady();
+
+            JDAIntegration integration = new JDAIntegration(jda);
+
+
+            KCommando kCommando = new KCommando(integration)
+                    .addPackage("xyz.n7mn.dev")
+                    .setPrefix("h.")
+                    .build();
+
+            /*jda = JDABuilder.createLight(configManager.getString("discord.token"), GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MEMBERS, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_PRESENCES, GatewayIntent.GUILD_EMOJIS_AND_STICKERS)
                     .addEventListeners(new EventListener())
                     .enableCache(CacheFlag.VOICE_STATE)
                     //.enableCache(CacheFlag.EMOTE)
                     .setMemberCachePolicy(MemberCachePolicy.ALL)
                     .setActivity(Activity.playing("h.help all"))
-                    .build();
+                    .build();*/
+
+
 
             //Listeners
             MessageListeners.addListener(new CommandManager(), new AddCoinManager());
 
             //Start
             if (configManager.getBoolean("enable.earthquake")) {
-                EarthQuakeYahoo.start(instance);
+                EarthQuakeYahoo.start(jda);
             }
 
             if (configManager.getBoolean("enable.earthquake.nied")) {
-                earthQuakeYahooMonitor = new EarthQuakeYahooMonitor(instance);
+                earthQuakeYahooMonitor = new EarthQuakeYahooMonitor(jda);
                 earthQuakeYahooMonitor.startNewThread();
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
 }

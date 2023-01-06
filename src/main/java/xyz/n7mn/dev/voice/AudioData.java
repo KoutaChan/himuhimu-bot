@@ -6,12 +6,11 @@ import lombok.Setter;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
-import xyz.n7mn.dev.music.AudioHandler;
-import xyz.n7mn.dev.music.MusicManager;
 import xyz.n7mn.dev.sqlite.MusicDB;
 import xyz.n7mn.dev.sqlite.SQLite;
 import xyz.n7mn.dev.sqlite.data.SQLiteMusicData;
 import xyz.n7mn.dev.voice.music.MusicScheduler;
+import xyz.n7mn.dev.voice.roid.RoidScheduler;
 
 import java.util.HashMap;
 
@@ -60,6 +59,8 @@ public class AudioData {
     public static AudioListener getTypeAudio(AudioType type, AudioPlayer player) {
         if (type == AudioType.MUSIC) {
             return new MusicScheduler(AudioManager.getAudioManager(), player);
+        } else if (type == AudioType.VOICE_ROID) {
+            return new RoidScheduler(player);
         }
         return null;
     }

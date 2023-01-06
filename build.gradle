@@ -21,7 +21,8 @@ repositories {
 }
 
 dependencies {
-    implementation 'net.dv8tion:JDA:5.0.0-alpha.22'
+    implementation 'net.dv8tion:JDA:5.0.0-alpha.21'
+    implementation 'com.github.koply.KCommando:jda-integration:5.0.1'
 
     compileOnly 'org.projectlombok:lombok:1.18.24'
     annotationProcessor 'org.projectlombok:lombok:1.18.24'
@@ -32,6 +33,7 @@ dependencies {
     implementation 'org.jsoup:jsoup:1.15.3'
     implementation 'org.json:json:20211205'
     implementation 'org.xerial:sqlite-jdbc:3.39.3.0'
+    implementation 'com.github.nanami-network:CeVIOJava:99bef31b01'
     implementation 'net.java.dev.jna:jna:5.12.1'
 
     //???

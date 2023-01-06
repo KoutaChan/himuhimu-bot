@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class EarthQuakeDB {
-
     public EarthQuakeDB() {
         Connection connection = null;
         try {
