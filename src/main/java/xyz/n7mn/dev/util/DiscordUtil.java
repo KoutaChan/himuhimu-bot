@@ -1,10 +1,14 @@
 package xyz.n7mn.dev.util;
 
 import lombok.experimental.UtilityClass;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import xyz.n7mn.dev.voice.AudioData;
 import xyz.n7mn.dev.voice.AudioManager;
+
+import java.awt.*;
+import java.util.Collection;
 
 @UtilityClass
 public class DiscordUtil {
@@ -56,27 +60,29 @@ public class DiscordUtil {
         };
     }
 
+    public static String toString(Collection<?> objects) {
+        StringBuilder builder = new StringBuilder();
+        for (Object object : objects) {
+            if (!builder.isEmpty()) {
+                builder.append("\n");
+            }
+            builder.append(object);
+        }
+        return builder.toString();
+    }
+
     public void stop(Guild guild) {
         AudioData data = AudioManager.getAudio(guild);
-
         if (data != null) {
             data.getListener().exit();
             data.remove();
         }
+    }
 
-        /*AudioTrackData audioTrack = MusicManager.getMusicManager().getMusicData(guild).getTrackScheduler().getAudioTrack();
-
-        if (audioTrack != null && audioTrack.getNicoVideo() != null && audioTrack.getNicoVideo().isSuccess()) {
-            audioTrack.getNicoVideo().setBreak(true);
-        }
-
-        if (MusicManager.getMusicManager().hasMusicData(guild))
-            MusicManager.getMusicManager().getMusicData(guild).getAudioPlayer().destroy();
-
-        MusicManager.musicData.remove(guild.getIdLong());
-        VoiceManager.voiceData.remove(guild.getIdLong());
-        VoiceRoidStartCommand.textChannelId.remove(guild.getIdLong());
-
-        guild.getAudioManager().closeAudioConnection();*/
+    public EmbedBuilder getErrorEmbeds(String reason) {
+        return new EmbedBuilder()
+                .setTitle("[!] エラーが発生しました")
+                .setColor(Color.RED)
+                .addField("エラー内容: ", reason, false);
     }
 }

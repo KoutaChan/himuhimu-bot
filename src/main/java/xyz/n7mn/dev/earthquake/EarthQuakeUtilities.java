@@ -5,16 +5,11 @@ import lombok.Setter;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.utils.FileUpload;
-import xyz.n7mn.dev.sqlite.SQLite;
+import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
 import xyz.n7mn.dev.earthquake.data.ResultData;
+import xyz.n7mn.dev.sqlite.SQLite;
 
 import java.awt.*;
-import java.io.ByteArrayOutputStream;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -27,11 +22,11 @@ public class EarthQuakeUtilities {
     public static void sendYahooMessage(JDA instance) {
         if (instance != null) {
             new Thread(() -> {
-                Map<String, String> map = SQLite.INSTANCE.getEarthQuake().getAll();
+                Map<String, String> map = SQLite.INSTANCE.getEarthQuake().getLegacyAll();
 
                 map.forEach((g, t) -> {
                     Guild guild = instance.getGuildById(g);
-                    TextChannel textChannel = guild != null ? guild.getTextChannelById(t) : null;
+                    GuildMessageChannelUnion textChannel = guild != null ? guild.getChannelById(GuildMessageChannelUnion.class, t) : null;
 
                     if (textChannel != null && textChannel.canTalk()) {
                         textChannel.sendMessageEmbeds(EarthQuakeUtilities.getResultData().getEmbedBuilder().build()).queue();
@@ -43,47 +38,6 @@ public class EarthQuakeUtilities {
             }).start();
         }
     }
-
-    public static void sendNIEDMessage(JDA instance, ByteArrayOutputStream stream, List<Message> messages) {
-        if (instance != null) {
-            new Thread(() -> {
-                Map<String, String> map = SQLite.INSTANCE.getEarthQuake().getAll();
-                final byte[] gif = stream.toByteArray();
-
-                map.forEach((g, t) -> {
-                    Guild guild = instance.getGuildById(g);
-                    TextChannel textChannel = guild != null ? guild.getTextChannelById(t) : null;
-
-                    if (textChannel != null && textChannel.canTalk()) {
-                        messages.add(textChannel.sendMessageEmbeds(EarthQuakeUtilities.getResultData().getTemp().build())
-                                .addFiles(FileUpload.fromData(gif, "earthquake.gif"))
-                                .complete());
-                    }
-                });
-
-                System.out.println("[NIED] およそ" + map.size() + " 件送信！");
-            }).start();
-        }
-    }
-
-    public static void editNIEDMessage(EmbedBuilder embedBuilder, List<Message> messages, ByteArrayOutputStream stream) {
-        if (messages != null) {
-            Iterator<Message> it = messages.iterator();
-
-            byte[] gif = stream.toByteArray();
-
-            while (it.hasNext()) {
-                try {
-                    it.next().editMessageEmbeds(embedBuilder.build())
-                            .setFiles(FileUpload.fromData(gif, "earthquake.gif"))
-                            .queue();
-                } catch (Exception ex) {
-                    it.remove();
-                }
-            }
-        }
-    }
-
 
     public static void changeColor(EmbedBuilder embedBuilder, String sindo) {
         switch (sindo) {

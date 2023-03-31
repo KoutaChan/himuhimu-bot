@@ -8,19 +8,24 @@ import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
+import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
+import net.dv8tion.jda.api.interactions.components.ItemComponent;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import xyz.n7mn.dev.HimuHimuMain;
+import xyz.n7mn.dev.util.DiscordUtil;
+import xyz.n7mn.dev.util.HtmlUtils;
 import xyz.n7mn.dev.util.TimeUtils;
 import xyz.n7mn.dev.voice.AudioListener;
 
 import java.awt.*;
 import java.io.IOException;
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -33,6 +38,7 @@ import java.util.regex.Pattern;
 public class MusicScheduler extends AudioListener {
     private final BlockingQueue<AudioTrackData> queue = new LinkedBlockingQueue<>();
     private AudioPlayerManager manager;
+    private boolean repeat;
 
     public MusicScheduler(AudioPlayerManager manager, AudioPlayer player) {
         super(player);
@@ -65,142 +71,72 @@ public class MusicScheduler extends AudioListener {
 
     private final static Pattern URL_PATTERN = Pattern.compile("\\b(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]");
 
-    public static void main(String[] args) {
-
-    }
-
-    public void search(TextChannel textChannel, String url) {
+    public void search(IReplyCallback textChannel, String url) {
         if (URL_PATTERN.matcher(url).matches()) {
-
+            searchAndPlay(textChannel, url);
         } else {
-
+            searchOnYoutube(textChannel, url);
         }
     }
 
-    private String YOUTUBE_API = HimuHimuMain.configManager.getString("youtube.url") +"?text=";
-
-    public void searchLegacy(TextChannel textChannel, String name) {
-        String url = YOUTUBE_API + name;
-
-        if (URL_PATTERN.matcher(url).matches()) {
-            Request request = new Request.Builder().url(url).build();
-
-            new OkHttpClient().newBuilder().callTimeout(5, TimeUnit.SECONDS)
-                    .build()
-                    .newCall(request)
-                    .enqueue(new Callback() {
-                        @Override
-                        public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                            textChannel.sendMessage("[API] APIでエラーが発生しました。 もう一回試してみてください").queue();
-                        }
-
-                        @Override
-                        public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                            if (response.isSuccessful()) {
-                                try (ResponseBody body = Objects.requireNonNull(response.body())) {
-                                    JSONArray context = new JSONObject(body.string()).getJSONArray("items");
-
-                                    EmbedBuilder embed = new EmbedBuilder();
-
-                                    if (context.length() == 0) {
-                                        embed.setTitle("検索候補が見つかりませんでした！")
-                                                .setDescription(name + "で検索しました");
-                                                //.setTimestamp();
-                                        /* ZERO MESSAGE */
-                                    } else {
-                                        for (int i = 0; i < context.length(); i++) {
-                                            JSONObject videoInfo = context.getJSONObject(i);
-
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
+    private final String YOUTUBE_API = HimuHimuMain.configManager.getString("youtube.url") + "?text=";
+    public void searchOnYoutube(IReplyCallback textChannel, String name) {
+        if (!HimuHimuMain.configManager.getBoolean("youtube.search")) {
+            return;
         }
-    }
-    /*
-        public void searchYoutube(String trackURL, TextChannel channel) {
-        String url = HimuHimuMain.configManager.getString("youtube.url") + "?text=" + trackURL;
+        new OkHttpClient().newBuilder().callTimeout(5, TimeUnit.SECONDS)
+                .build()
+                .newCall(new Request.Builder().url(YOUTUBE_API + name).build())
+                .enqueue(new Callback() {
+                    @Override
+                    public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                        textChannel.getHook().editOriginalEmbeds(DiscordUtil.getErrorEmbeds("[API] APIでエラーが発生しました。 もう一度やり直してください！").build()).queue();
+                    }
 
-        if (!url.equals("URL_HERE")) {
+                    @Override
+                    public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                        try (ResponseBody body = response.body()) {
+                            if (!response.isSuccessful()) {
+                                textChannel.getHook().editOriginalEmbeds(DiscordUtil.getErrorEmbeds("[API] HTTPリクエストに失敗しました").build()).queue();
+                            } else {
+                                JSONArray videoArray = new JSONObject(body.string()).getJSONArray("items");
 
-            //JsoupだとJsonが勝手に置き換えられてました
-            Request request = new Request.Builder().url(url)
-                    .build();
-
-            new OkHttpClient().newBuilder().callTimeout(5, TimeUnit.SECONDS)
-                    .build()
-                    .newCall(request)
-                    .enqueue(new Callback() {
-                        @Override
-                        public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                            e.printStackTrace();
-                        }
-
-                        @Override
-                        public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                            try (ResponseBody body = response.body()) {
-
-                                if (!response.isSuccessful()) {
-                                    System.out.print("print the error:\n");
-                                    System.out.print(body.string() + "\n");
-
-                                    throw new IOException("timeout ?" + response);
-                                }
-
-                                JSONObject jsonObject = new JSONObject(body.string());
-                                JSONArray videoArray = jsonObject.getJSONArray("items");
-
-                                EmbedBuilder embedBuilder = new EmbedBuilder()
+                                EmbedBuilder content = new EmbedBuilder()
+                                        .setTitle(name + "で検索しました (" + videoArray.length() + "件検索しました)")
                                         .setFooter("YouTube API v3. - ベータ版 API上限になる可能性があります");
 
-                                List<ItemComponent> itemComponentList = new ArrayList<>();
-
+                                List<ItemComponent> components = new ArrayList<>();
                                 for (int i = 0; i < videoArray.length(); i++) {
-                                    JSONObject videInfo = videoArray.getJSONObject(i);
-
-                                    final int count = i + 1;
-
-                                    JSONObject id = videInfo.getJSONObject("id");
-                                    JSONObject snippet = videInfo.getJSONObject("snippet");
-
-                                    embedBuilder.addField("[" + count + "] " + HtmlUtils.getString(snippet.getString("title")), "https://www.youtube.com/watch?v=" + id.getString("videoId"), false);
-
-                                    itemComponentList.add(Button.secondary("music-" + count, Emoji.fromUnicode("U+003" + count + " U+FE0F U+20E3")));
+                                    JSONObject videoInfo = videoArray.getJSONObject(i);
+                                    JSONObject id = videoInfo.getJSONObject("id");
+                                    JSONObject snippet = videoInfo.getJSONObject("snippet");
+                                    content.addField("[" + (i + 1) + "]" + HtmlUtils.getString(snippet.getString("title")), "https://www.youtube.com/watch?v=" + id.getString("videoId"), false);
+                                    components.add(Button.secondary("music-id-" + (i + 1), Emoji.fromUnicode("U+003" + (i + 1) + " U+FE0F U+20E3")));
                                 }
-
-                                if (itemComponentList.size() == 0) {
-                                    embedBuilder.setTitle("Not Found!");
-
-                                    channel.sendMessageEmbeds(embedBuilder.build()).queue();
-                                } else {
-                                    embedBuilder.setTitle("再生可能リスト (" + itemComponentList.size() + ") 個の中から選択してください)");
-
-                                    channel.sendMessageEmbeds(embedBuilder.build()).setActionRow(itemComponentList).queue();
+                                if (components.isEmpty()) {
+                                    content.addField("何も見つかりませんでした", "何を検索したんですか？", false);
                                 }
+                                textChannel.getHook().editOriginalEmbeds(content.build()).setActionRow(components).queue();
                             }
                         }
-                    });
-        }
+                    }
+                });
     }
-}
-     */
 
-    public void searchAndPlay(TextChannel textChannel, String url) {
+    public void searchAndPlay(IReplyCallback textChannel, String url) {
         manager.loadItem(url, new AudioLoadResultHandler() {
             @Override
             public void trackLoaded(AudioTrack track) {
                 queue(track);
 
                 if (textChannel != null) {
-                    textChannel.sendMessageEmbeds(new EmbedBuilder()
-                            .setTitle(">> 再生する音楽を追加しました")
-                            .setColor(Color.PINK)
-                            .addField("[~] タイトル", track.getInfo().title, false)
-                            .addField("[!] URL", track.getInfo().title, false)
-                            .addField("[+] 再生時間", track.getInfo().isStream ? "[!] ライブ配信" : TimeUtils.convertSecondToFormat(track.getDuration()), false)
-                            .build())
+                    textChannel.getHook().editOriginalEmbeds(new EmbedBuilder()
+                                    .setTitle(">> 再生する音楽を追加しました")
+                                    .setColor(Color.PINK)
+                                    .addField("[~] タイトル", track.getInfo().title, false)
+                                    .addField("[!] URL", track.getInfo().uri, false)
+                                    .addField("[+] 再生時間", track.getInfo().isStream ? "[!] ライブ配信" : TimeUtils.convertSecondToFormat(track.getDuration()), false)
+                                    .build())
                             .queue();
                 }
             }
@@ -217,10 +153,11 @@ public class MusicScheduler extends AudioListener {
                 }
 
                 if (textChannel != null) {
-                    textChannel.sendMessageEmbeds(new EmbedBuilder()
-                                    .setTitle(">> 再生する音楽を追加しました")
+                    textChannel.getHook().editOriginalEmbeds(new EmbedBuilder()
                                     .setColor(Color.PINK)
+                                    .setTitle(">> 再生する音楽を追加しました")
                                     .addField("[~] タイトル", track.getInfo().title, false)
+                                    .addField("[!] URL", track.getInfo().uri, false)
                                     .addField("[+] 再生時間", TimeUtils.convertSecondToFormat(total), false)
                                     .build())
                             .queue();
@@ -230,10 +167,10 @@ public class MusicScheduler extends AudioListener {
             @Override
             public void noMatches() {
                 if (textChannel != null) {
-                    textChannel.sendMessageEmbeds(new EmbedBuilder()
+                    textChannel.getHook().editOriginalEmbeds(new EmbedBuilder()
+                                    .setColor(Color.RED)
                                     .setTitle(">> エラー！")
                                     .setDescription("[!] 再生できないコンテンツです")
-                                    .setColor(Color.RED)
                                     .build())
                             .queue();
                 }
@@ -242,12 +179,12 @@ public class MusicScheduler extends AudioListener {
             @Override
             public void loadFailed(FriendlyException exception) {
                 if (textChannel != null) {
-                    textChannel.sendMessageEmbeds(new EmbedBuilder()
-                            .setTitle(">> エラー！")
-                            .setDescription("[!] 再生できないURLです！")
-                            .setColor(Color.RED)
-                            .addField("エラー内容", exception.getMessage(), false)
-                            .build())
+                    textChannel.getHook().editOriginalEmbeds(new EmbedBuilder()
+                                    .setColor(Color.RED)
+                                    .setTitle(">> エラー！")
+                                    .setDescription("[!] 再生できないURLです！")
+                                    .addField("エラー内容", exception.getMessage(), false)
+                                    .build())
                             .queue();
                 }
             }
@@ -261,12 +198,22 @@ public class MusicScheduler extends AudioListener {
 
     @Override
     public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason endReason) {
-        if (endReason.mayStartNext) {
-
+        if (this.repeat) {
+            player.playTrack(track.makeClone());
+        } else if (endReason.mayStartNext) {
+            player.playTrack(track);
         } else {
 
         }
-         super.onTrackEnd(player, track, endReason);
+        super.onTrackEnd(player, track, endReason);
+    }
+
+    public boolean isRepeat() {
+        return repeat;
+    }
+
+    public boolean setRepeat(boolean newValue) {
+        return this.repeat = newValue;
     }
 
     @Override

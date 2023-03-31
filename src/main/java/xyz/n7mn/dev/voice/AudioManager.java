@@ -2,27 +2,18 @@ package xyz.n7mn.dev.voice;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
-import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager;
-import com.sedmelluq.discord.lavaplayer.track.AudioItem;
-import com.sedmelluq.discord.lavaplayer.track.AudioReference;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
-import lombok.Getter;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
+import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
+import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
 import xyz.n7mn.dev.voice.provider.nico.HimuNicoAudioSourceManager;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 public class AudioManager {
     public static final AudioPlayerManager manager = new DefaultAudioPlayerManager();
+    private static final Map<Long, AudioData> audio = new HashMap<>();
 
     static {
         manager.registerSourceManager(new HimuNicoAudioSourceManager());
@@ -30,9 +21,8 @@ public class AudioManager {
         AudioSourceManagers.registerRemoteSources(manager);
     }
 
-    private final static Map<Long, AudioData> audio = new HashMap<>();
 
-    public static AudioData createAudio(AudioType type, TextChannel textChannel, VoiceChannel channel) {
+    public static AudioData createAudio(AudioType type, GuildMessageChannelUnion textChannel, AudioChannelUnion channel) {
         audio.put(textChannel.getGuild().getIdLong(), new AudioData(type, textChannel, channel));
         return getAudio(textChannel.getGuild());
     }
@@ -41,8 +31,8 @@ public class AudioManager {
         return audio.get(guild.getIdLong());
     }
 
-    public static AudioData removeAudio(Guild guild) {
-        return audio.remove(guild.getIdLong());
+    public static void removeAudio(Guild guild) {
+        audio.remove(guild.getIdLong());
     }
 
     public static Map<Long, AudioData> getAudioMap() {

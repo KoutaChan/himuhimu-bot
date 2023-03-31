@@ -1,12 +1,14 @@
 package xyz.n7mn.dev;
 
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.managers.AudioManager;
 import org.jetbrains.annotations.NotNull;
-import xyz.n7mn.dev.message.MessageListeners;
-import xyz.n7mn.dev.util.DiscordUtil;
+import xyz.n7mn.dev.events.ButtonEventManager;
+import xyz.n7mn.dev.events.MessageEventManager;
+import xyz.n7mn.dev.events.SlashEventManager;
 
 public class EventListener extends ListenerAdapter {
     /*@Override
@@ -79,8 +81,7 @@ public class EventListener extends ListenerAdapter {
         if (event.isWebhookMessage() || event.getAuthor().isBot()) {
             return;
         }
-
-        MessageListeners.getListeners().forEach(v -> {
+        MessageEventManager.getListeners().forEach(v -> {
             v.onMessageReceivedEvent(event);
         });
 
@@ -112,6 +113,24 @@ public class EventListener extends ListenerAdapter {
                 }
             }
         }*/
+    }
+
+    @Override
+    public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
+        if (event.isFromGuild()) {
+            SlashEventManager.getListeners().forEach(v -> {
+                v.onSlashCommandInteractionEvent(event);
+            });
+        }
+    }
+
+    @Override
+    public void onButtonInteraction(ButtonInteractionEvent event) {
+        if (event.isFromGuild()) {
+            ButtonEventManager.getListeners().forEach(v -> {
+                v.onButtonInteractionEvent(event);
+            });
+        }
     }
 
     @Override

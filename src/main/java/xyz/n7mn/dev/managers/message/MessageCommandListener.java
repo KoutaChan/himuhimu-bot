@@ -1,11 +1,11 @@
-package xyz.n7mn.dev.commands;
+package xyz.n7mn.dev.managers.message;
 
-import xyz.n7mn.dev.message.MessageListener;
+import xyz.n7mn.dev.events.MessageEvent;
 
-public abstract class CommandListener extends MessageListener {
+public abstract class MessageCommandListener implements MessageEvent {
     private final String displayCommand, help;
 
-    public CommandListener(String displayCommand, String help) {
+    public MessageCommandListener(String displayCommand, String help) {
         this.displayCommand = displayCommand;
         this.help = help;
     }

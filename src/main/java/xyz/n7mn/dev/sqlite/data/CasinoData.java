@@ -16,22 +16,18 @@ public class CasinoData {
         this.coin = coin;
     }
 
-    public CasinoData update(long addCoin) {
-
+    public CasinoData update(long coin) {
         //無駄にデータベースをアップデートするだけ
-        if (addCoin == 0) return this;
-
-        coin = addCoin > 0 ? addCoin(addCoin) : removeCoin(addCoin);
-
-        SQLite.INSTANCE.getCasino().update(guild, userid, coin);
-
+        if (coin != 0) {
+            this.coin = coin > 0 ? addCoin(coin) : removeCoin(coin);
+            SQLite.INSTANCE.getCasino().update(guild, userid, this.coin);
+        }
         return this;
     }
 
     public CasinoData set(long coin) {
         SQLite.INSTANCE.getCasino().update(guild, userid, coin);
         this.coin = coin;
-
         return this;
     }
 

@@ -6,7 +6,6 @@ import xyz.n7mn.dev.earthquake.EarthQuakeUtilities;
 
 @Getter @Setter
 public class EarthQuakeData {
-
     private String area;
     private String num;
     private String sindo;

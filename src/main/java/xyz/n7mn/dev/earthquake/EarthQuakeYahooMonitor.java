@@ -4,9 +4,10 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.apache.commons.io.IOUtils;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
@@ -18,12 +19,10 @@ import xyz.n7mn.dev.util.pair.Pair;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.ImageObserver;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -35,7 +34,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class EarthQuakeYahooMonitor {
-
     //color data
     public static Color si_20 = Color.decode("#b600d7"); //7
     public static Color si_19 = Color.decode("#c900ba"); //6+
@@ -58,7 +56,6 @@ public class EarthQuakeYahooMonitor {
     public static Color si_2 = Color.decode("#89afc8"); //-1
     public static Color si_1 = Color.decode("#90b3ca"); //-2
     public static Color si_0 = Color.decode("#97b7cc"); //-3
-
     public static Color BACKGROUND_COLOR = Color.decode("#343434");
 
     private JSONObject positions;
@@ -66,8 +63,8 @@ public class EarthQuakeYahooMonitor {
 
     private boolean synced = true;
     private JSONArray map;
-
     private final Map<String, List<Message>> messages = new HashMap<>();
+    private final List<Consumer<BufferedImage>> queue = new ArrayList<>();
 
     //task and worker
     private Thread worker;
@@ -80,17 +77,18 @@ public class EarthQuakeYahooMonitor {
     private int update;
 
     private long lastPing;
-
     private final JDA JDA;
+
+    private final List<Consumer<byte[]>> request = new ArrayList<>();
 
     public EarthQuakeYahooMonitor(JDA JDA) {
         this.JDA = JDA;
 
         try {
-            positions = new JSONObject(new String(IOUtils.toByteArray(this.getClass().getResourceAsStream("/earthquake_area_data.json")), StandardCharsets.UTF_8));
+            this.positions = new JSONObject(new String(IOUtils.toByteArray(this.getClass().getResourceAsStream("/earthquake_area_data.json")), StandardCharsets.UTF_8));
 
-            base = ImageIO.read(this.getClass().getResourceAsStream("/base.png"));
-            hypo = ImageIO.read(this.getClass().getResourceAsStream("/hypo.png"));
+            this.base = ImageIO.read(this.getClass().getResourceAsStream("/base.png"));
+            this.hypo = ImageIO.read(this.getClass().getResourceAsStream("/hypo.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -120,64 +118,62 @@ public class EarthQuakeYahooMonitor {
             Document document = Jsoup.connect(String.format(requests, days, seconds))
                     .ignoreContentType(true)
                     .get();
-
             JSONObject jsonObject = new JSONObject(document.text());
 
             final boolean isEarthQuake = !jsonObject.isNull("hypoInfo");
+            JSONObject realTimeData = jsonObject.getJSONObject("realTimeData");
+            String intensity = realTimeData.getString("intensity");
+            byte[] bytes = intensity.getBytes(StandardCharsets.UTF_8);
+            getData(map != null && bytes.length == map.length());
 
-            if (isEarthQuake) {
-                JSONObject realTimeData = jsonObject.getJSONObject("realTimeData");
-                String intensity = realTimeData.getString("intensity");
-
-                byte[] bytes = intensity.getBytes(StandardCharsets.UTF_8);
-                getData(map != null && bytes.length == map.length());
-
-                if (map.length() != bytes.length) {
-                    throw new RuntimeException("Failed Sync");
-                }
-
-                Map<Pair<Double, Double>, Integer> hashMap = new HashMap<>();
-
-                //PS WAVE
-                writePSWave(bufferedImage, jsonObject);
-
-                for (int i = 0; i < map.length(); i++) {
-                    //ヤフーリアルタイムモニタの色の表示方法は byteを -100したときに残った数字です。
-                    //最大で21段階あります
-                    final int by = bytes[i] - 100;
-                    //-1は何も表示しません
-                    if (by >= 0) {
-                        final JSONArray array = map.getJSONArray(i);
-                        final double latitude = array.getDouble(0);
-                        final double longitude = array.getDouble(1);
-
-                        hashMap.put(Pair.of(latitude, longitude), by);
-                    }
-                }
-
-                //Yahooリアルタイムモニタでは震度が大きい順に上から表示されるので、上書きで正円が消えないように。
-                //小さい順にソートする。
-                List<Map.Entry<Pair<Double, Double>, Integer>> entries = hashMap.entrySet().stream().sorted(Comparator.comparingInt(Map.Entry::getValue))
-                        .collect(Collectors.toList());
-
-                //finally, you can write!
-                for (Map.Entry<Pair<Double, Double>, Integer> entry : entries) {
-                    write(g2d, entry.getKey(), entry.getValue());
-                }
-                writeHypoLocation(g2d, jsonObject);
-
-                g2d.dispose();
-
-                //TODO: ADD Text Options
-                BufferedImage finalImage = additionalText(bufferedImage, jsonObject, entries);
-                earthQuakeEvent(isEarthQuake, v -> checkMessage(jsonObject, finalImage));
-
-                //debug
-                ImageIO.write(finalImage, "png", Paths.get("", "test-" + date.getTime() + ".png").toFile());
-            } else {
-                earthQuakeEvent(isEarthQuake, null);
+            if (map.length() != bytes.length) {
+                throw new RuntimeException("Failed Sync");
             }
 
+            Map<Pair<Double, Double>, Integer> hashMap = new HashMap<>();
+
+            //PS WAVE
+            JSONObject psWave = jsonObject.optJSONObject("psWave");
+            if (isEarthQuake && psWave != null) {
+                writePSWave(bufferedImage, psWave);
+            }
+
+            for (int i = 0; i < map.length(); i++) {
+                //ヤフーリアルタイムモニタの色の表示方法は byteを -100したときに残った数字です。
+                //最大で21段階あります
+                final int by = bytes[i] - 100;
+                //-1は何も表示しません
+                if (by >= 0) {
+                    final JSONArray array = map.getJSONArray(i);
+                    final double latitude = array.getDouble(0);
+                    final double longitude = array.getDouble(1);
+
+                    hashMap.put(Pair.of(latitude, longitude), by);
+                }
+            }
+            //Yahooリアルタイムモニタでは震度が大きい順に上から表示されるので、上書きで正円が消えないように。
+            //小さい順にソートする。
+            List<Map.Entry<Pair<Double, Double>, Integer>> entries = hashMap.entrySet().stream().sorted(Comparator.comparingInt(Map.Entry::getValue))
+                    .collect(Collectors.toList());
+            //finally, you can write!
+            for (Map.Entry<Pair<Double, Double>, Integer> entry : entries) {
+                write(g2d, entry.getKey(), entry.getValue());
+            }
+            writeHypoLocation(g2d, jsonObject);
+            g2d.dispose();
+            //TODO: ADD Text Options
+            BufferedImage finalImage = additionalText(bufferedImage, jsonObject, entries);
+            //you can sent messages...!
+            if (isEarthQuake) {
+                checkMessage(jsonObject, finalImage);
+            } else {
+                this.messages.clear();
+            }
+            //Events...
+            for (Consumer<BufferedImage> queue : this.queue) {
+                queue.accept(finalImage);
+            }
+            this.queue.clear();
             retry = 0;
         } catch (Exception ex) {
             retry++;
@@ -194,16 +190,6 @@ public class EarthQuakeYahooMonitor {
         }
 
         lastPing = date.getTime();
-    }
-
-    public void earthQuakeEvent(boolean isEarthQuake, Consumer<Void> consumer) {
-        if (isEarthQuake) {
-            consumer.accept(null);
-
-            return;
-        }
-
-        messages.clear();
     }
 
     public boolean canOverride() {
@@ -270,18 +256,17 @@ public class EarthQuakeYahooMonitor {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         return out.toByteArray();
     }
 
     public void sendToDiscord(JDA INSTANCE, byte[] file, Consumer<List<Message>> message) {
-        Map<String, String> map = SQLite.INSTANCE.getEarthQuake().getAll();
+        Map<String, String> map = SQLite.INSTANCE.getEarthQuake().getLegacyAll();
 
         List<Message> messages = new ArrayList<>();
 
         map.forEach((g, t) -> {
             Guild guild = INSTANCE.getGuildById(g);
-            TextChannel textChannel = guild != null ? guild.getTextChannelById(t) : null;
+            GuildMessageChannelUnion textChannel = guild != null ? guild.getChannelById(GuildMessageChannelUnion.class, t) : null;
 
             if (textChannel != null && textChannel.canTalk()) {
                 messages.add(textChannel.sendMessageEmbeds(EarthQuakeUtilities.getResultData().getEmbedBuilder().build())
@@ -376,7 +361,6 @@ public class EarthQuakeYahooMonitor {
                 g2dInformation.drawString("不明", startingPos + 25, y + 25);
             }
         }
-
         g2dInformation.dispose();
 
         return info;
@@ -444,37 +428,32 @@ public class EarthQuakeYahooMonitor {
     //left lng=116.45558291793395
     //right lng=153.74441708206723
     //bottom lat=23.64048885571455
-    public void writePSWave(BufferedImage bufferedImage, JSONObject object) {
-        JSONObject psWave = object.optJSONObject("psWave");
+    public void writePSWave(@NotNull BufferedImage bufferedImage, @NotNull JSONObject psWave) {
+        JSONArray items = psWave.getJSONArray("items");
+        for (int i = 0; i < items.length(); i++) {
+            JSONObject item = items.getJSONObject(i);
 
-        if (psWave != null) {
-            JSONArray items = psWave.getJSONArray("items");
+            Pair<Double, Double> pixelXY = convertGeoToPixel(Double.parseDouble(item.getString("latitude").replaceAll("N", "")), Double.parseDouble(item.getString("longitude").replaceAll("E", ""))
+                    , 1200, 900, 116.45558291796095, 153.74441708208371, 23.640487987015774);
 
-            for (int i = 0; i < items.length(); i++) {
-                JSONObject item = items.getJSONObject(i);
+            final int pRadius = (int) Double.parseDouble(item.getString("pRadius"));
+            final int sRadius = (int) Double.parseDouble(item.getString("sRadius"));
 
-                Pair<Double, Double> pixelXY = convertGeoToPixel(Double.parseDouble(item.getString("latitude").replaceAll("N", "")), Double.parseDouble(item.getString("longitude").replaceAll("E", ""))
-                        , 1200, 900, 116.45558291796095, 153.74441708208371, 23.640487987015774);
+            Graphics2D graphics2D = bufferedImage.createGraphics();
 
-                final int pRadius = (int) Double.parseDouble(item.getString("pRadius"));
-                final int sRadius = (int) Double.parseDouble(item.getString("sRadius"));
+            graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            graphics2D.setColor(new Color(255, 0, 0, 50));
+            graphics2D.fillOval(pixelXY.getKey().intValue() - (sRadius / 2), pixelXY.getValue().intValue() - (sRadius / 2), sRadius, sRadius);
+            graphics2D.setColor(Color.RED);
+            graphics2D.drawOval(pixelXY.getKey().intValue() - (sRadius / 2), pixelXY.getValue().intValue() - (sRadius / 2), sRadius, sRadius);
 
-                Graphics2D graphics2D = bufferedImage.createGraphics();
+            graphics2D.setColor(new Color(0, 0, 255, 50));
+            graphics2D.fillOval(pixelXY.getKey().intValue() - (pRadius / 2), pixelXY.getValue().intValue() - (pRadius / 2), pRadius, pRadius);
+            graphics2D.setColor(Color.BLUE);
+            graphics2D.drawOval(pixelXY.getKey().intValue() - (pRadius / 2), pixelXY.getValue().intValue() - (pRadius / 2), pRadius, pRadius);
 
-                graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                graphics2D.setColor(new Color(255, 0, 0, 50));
-                graphics2D.fillOval(pixelXY.getKey().intValue() - (sRadius / 2), pixelXY.getValue().intValue() - (sRadius / 2), sRadius, sRadius);
-                graphics2D.setColor(Color.RED);
-                graphics2D.drawOval(pixelXY.getKey().intValue() - (sRadius / 2), pixelXY.getValue().intValue() - (sRadius / 2), sRadius, sRadius);
-
-                graphics2D.setColor(new Color(0, 0, 255, 50));
-                graphics2D.fillOval(pixelXY.getKey().intValue() - (pRadius / 2), pixelXY.getValue().intValue() - (pRadius / 2), pRadius, pRadius);
-                graphics2D.setColor(Color.BLUE);
-                graphics2D.drawOval(pixelXY.getKey().intValue() - (pRadius / 2), pixelXY.getValue().intValue() - (pRadius / 2), pRadius, pRadius);
-
-                /*graphics2D.drawImage(hypo, pixelXY.getKey().intValue() - (hypo.getWidth() / 2), pixelXY.getValue().intValue() - (hypo.getHeight() / 2), null);*/
-                graphics2D.dispose();
-            }
+            /*graphics2D.drawImage(hypo, pixelXY.getKey().intValue() - (hypo.getWidth() / 2), pixelXY.getValue().intValue() - (hypo.getHeight() / 2), null);*/
+            graphics2D.dispose();
         }
     }
 
@@ -501,6 +480,10 @@ public class EarthQuakeYahooMonitor {
         worker.start();
     }
 
+    public List<Consumer<BufferedImage>> getQueue() {
+        return queue;
+    }
+
     public long getLastPing() {
         return this.lastPing;
     }
@@ -515,7 +498,6 @@ public class EarthQuakeYahooMonitor {
 
     public void start() {
         stop();
-
         TimerTask task = new TimerTask() {
             public void run() {
                 execute();
@@ -567,6 +549,7 @@ public class EarthQuakeYahooMonitor {
 
     /**
      * THANK YOU
+     *
      * @credit: https://stackoverflow.com/questions/2103924/mercator-longitude-and-latitude-calculations-to-x-and-y-on-a-cropped-map-of-the
      */
     public static Pair<Double, Double> convertGeoToPixel(double latitude, double longitude, double mapWidth, double mapHeight, double mapLngLeft, double mapLngRight, double mapLatBottom) {

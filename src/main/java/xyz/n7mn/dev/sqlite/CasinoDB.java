@@ -103,16 +103,13 @@ public class CasinoDB {
 
     public void update(String guild, String userId, long coin) {
         Connection connection = null;
-
         try {
             connection = DriverManager.getConnection("jdbc:sqlite:botdata.db");
-
             PreparedStatement prepareStatement = connection.prepareStatement("update casino set coin = ? where guild = ? AND userid = ?");
             prepareStatement.setLong(1, coin);
             prepareStatement.setString(2, guild);
             prepareStatement.setString(3, userId);
             prepareStatement.executeUpdate();
-
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
@@ -126,7 +123,6 @@ public class CasinoDB {
 
     public void delete(String guild, String userid) {
         Connection connection = null;
-
         try {
             connection = DriverManager.getConnection("jdbc:sqlite:botdata.db");
 

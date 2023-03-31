@@ -18,7 +18,6 @@ public class MusicUtil {
 
     public SQLiteMusicData createMusicData(String guild) {
         SQLite.INSTANCE.getMusic().insert(guild, 100, 100);
-
         return new SQLiteMusicData(guild, 100, 100);
     }
 }

@@ -1,10 +1,10 @@
-package xyz.n7mn.dev.message.common;
+package xyz.n7mn.dev.events.common;
 
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import xyz.n7mn.dev.message.MessageListener;
+import xyz.n7mn.dev.events.MessageEvent;
 import xyz.n7mn.dev.util.CasinoManager;
 
-public class AddCoinManager extends MessageListener {
+public class AddCoinManager implements MessageEvent {
     @Override
     public void onMessageReceivedEvent(MessageReceivedEvent event) {
         if (event.isFromGuild() && event.getMember() != null) {

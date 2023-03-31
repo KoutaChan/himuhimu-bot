@@ -1,7 +1,5 @@
 package xyz.n7mn.dev.voice.provider.nico;
 
-import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
-import com.sedmelluq.discord.lavaplayer.player.AudioPlayerLifecycleManager;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
@@ -9,36 +7,24 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
-import com.sedmelluq.discord.lavaplayer.track.*;
+import com.sedmelluq.discord.lavaplayer.track.AudioItem;
+import com.sedmelluq.discord.lavaplayer.track.AudioReference;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import lombok.SneakyThrows;
-import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.entities.Activity;
-import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
-import net.dv8tion.jda.api.requests.GatewayIntent;
-import net.dv8tion.jda.api.utils.MemberCachePolicy;
-import net.dv8tion.jda.api.utils.WidgetUtil;
-import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.parser.Parser;
-import xyz.n7mn.dev.EventListener;
-import xyz.n7mn.dev.voice.AudioData;
-import xyz.n7mn.dev.voice.AudioListener;
-import xyz.n7mn.dev.voice.AudioManager;
-import xyz.n7mn.dev.voice.AudioType;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.sql.SQLSyntaxErrorException;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -56,17 +42,13 @@ public class HimuNicoAudioSourceManager implements AudioSourceManager, HttpConfi
     private static final String MY_LIST_URL_REGEX = "^(?:http://|https://|)(?:www\\.|)nicovideo\\.jp/user/([0-9]+)/mylist/([0-9]+)(?:\\?.*|)$";
     private static final Pattern myListUrlPattern = Pattern.compile(MY_LIST_URL_REGEX);
 
-    public HimuNicoAudioSourceManager() {
-        System.out.println("registered");
-    }
-
     @Override
     public String getSourceName() {
         return "himu-niconico";
     }
 
     public static void main(String[] args) {
-        JDA instance = JDABuilder.createLight("token", GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MEMBERS, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_PRESENCES, GatewayIntent.GUILD_EMOJIS_AND_STICKERS)
+        /*JDA instance = JDABuilder.createLight("token", GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MEMBERS, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_PRESENCES, GatewayIntent.GUILD_EMOJIS_AND_STICKERS)
                 .addEventListeners(new EventListener())
                 .enableCache(CacheFlag.VOICE_STATE)
                 //.enableCache(CacheFlag.EMOTE)
@@ -119,7 +101,7 @@ public class HimuNicoAudioSourceManager implements AudioSourceManager, HttpConfi
 
         System.out.println(trackMatcher.matches());
         System.out.println(trackMatcher.group(1));
-
+         */
     }
 
     @Override

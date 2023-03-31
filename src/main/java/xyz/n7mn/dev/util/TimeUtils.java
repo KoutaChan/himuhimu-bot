@@ -4,10 +4,11 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class TimeUtils {
-    public String convertSecondToFormat(long seconds) {
-        final long hour = seconds / 3600;
-        final long minutes = (seconds % 3600) / 60;
-        final long second = seconds / 60;
+    public String convertSecondToFormat(long milliseconds) {
+        milliseconds /= 1000;
+        final long hour = milliseconds / 3600;
+        final long minutes = (milliseconds % 3600) / 60;
+        final long second = milliseconds % 60;
 
         StringBuilder builder = new StringBuilder();
         if (hour != 0) {
