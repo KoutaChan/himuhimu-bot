@@ -3,6 +3,7 @@ package xyz.n7mn.dev.managers.slash;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
 import net.dv8tion.jda.api.requests.restaction.CommandCreateAction;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 
 public class SlashCommandManager implements SlashEvent {
     private final static Map<String, SlashCommandImpl> listeners = new HashMap<>();
+
 
     @Override
     public void onSlashCommandInteractionEvent(SlashCommandInteractionEvent event) {
@@ -70,7 +72,7 @@ public class SlashCommandManager implements SlashEvent {
         return command.stream().map(d -> {
             SubcommandData data = new SubcommandData(d.getName(), d.getDescription());
             for (Command.Option option : d.getOptions()) {
-                data.addOption(option.getType(), option.getName(), option.getDescription(), option.isRequired(), option.isAutoComplete());
+                data.addOptions(new OptionData(option.getType(), option.getName(), option.getDescription(), option.isRequired(), option.isAutoComplete()).addChoices(option.getChoices()));
             }
             return data;
         }).collect(Collectors.toList());
@@ -106,7 +108,11 @@ public class SlashCommandManager implements SlashEvent {
         SubcommandData data = new SubcommandData(slashCommand.name(), slashCommand.description());
         for (Option option : slashCommand.options()) {
             if (option.type() != OptionType.UNKNOWN) {
-                data.addOption(option.type(), option.name(), option.description(), option.required(), option.type().canSupportChoices() && option.autoComplete());
+                OptionData optionData = new OptionData(option.type(), option.name(), option.description(), option.required(), option.autoComplete());
+                for (Choice choice : option.choices()) {
+                    optionData.addChoice(choice.name(), choice.value());
+                }
+                data.addOptions(optionData);
             }
         }
         return data;

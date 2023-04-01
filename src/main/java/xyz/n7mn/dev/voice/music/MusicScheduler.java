@@ -135,7 +135,7 @@ public class MusicScheduler extends AudioListener {
                                     .setColor(Color.PINK)
                                     .addField("[~] タイトル", track.getInfo().title, false)
                                     .addField("[!] URL", track.getInfo().uri, false)
-                                    .addField("[+] 再生時間", track.getInfo().isStream ? "[!] ライブ配信" : TimeUtils.convertSecondToFormat(track.getDuration()), false)
+                                    .addField("[+] 再生時間", track.getInfo().isStream ? "[!] ライブ配信" : TimeUtils.convertMillisecondsToFormat(track.getDuration()), false)
                                     .build())
                             .queue();
                 }
@@ -158,7 +158,7 @@ public class MusicScheduler extends AudioListener {
                                     .setTitle(">> 再生する音楽を追加しました")
                                     .addField("[~] タイトル", track.getInfo().title, false)
                                     .addField("[!] URL", track.getInfo().uri, false)
-                                    .addField("[+] 再生時間", TimeUtils.convertSecondToFormat(total), false)
+                                    .addField("[+] 再生時間", TimeUtils.convertMillisecondsToFormat(total), false)
                                     .build())
                             .queue();
                 }

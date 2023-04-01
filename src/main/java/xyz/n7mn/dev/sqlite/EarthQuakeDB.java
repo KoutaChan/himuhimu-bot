@@ -82,7 +82,7 @@ public class EarthQuakeDB {
         try {
             connection = DriverManager.getConnection("jdbc:sqlite:botdata.db");
 
-            PreparedStatement prepareStatement = connection.prepareStatement("update earthquake set channel = ? where guild = ?");
+            PreparedStatement prepareStatement = connection.prepareStatement("update earthquake set channel = ?, realtime = ?, yahoo = ? where guild = ?");
             prepareStatement.setString(1, channel);
             prepareStatement.setString(2, guild);
             prepareStatement.setBoolean(3, announceRealTime);

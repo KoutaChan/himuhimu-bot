@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import xyz.n7mn.dev.commands.earthquake.EarthQuakePrintCommand;
 import xyz.n7mn.dev.commands.earthquake.EarthQuakeRegisterCommand;
 import xyz.n7mn.dev.commands.earthquake.EarthQuakeResetCommand;
+import xyz.n7mn.dev.commands.earthquake.EarthQuakeValueCommand;
 import xyz.n7mn.dev.commands.general.StatusCommand;
 import xyz.n7mn.dev.commands.music.MusicPlayCommand;
 import xyz.n7mn.dev.commands.music.MusicRepeatCommand;
@@ -49,12 +50,16 @@ public class HimuHimuMain {
             MessageEventManager.addListener(new MessageCommandManager(), new AddCoinManager());
             SlashEventManager.addListener(new SlashCommandManager());
             ButtonEventManager.addListener(new ButtonManager());
-            //Commands
+            //Command
+            //全部のコマンドを消す: ディスコードは消してくれないため
+            //安全のためスレッドを停止して登録させる、偉いよね？
+            jda.retrieveCommands().complete().forEach(d -> d.delete().complete());
             SlashCommandManager.register(new StatusCommand());
             SlashCommandManager.register(new MusicRepeatCommand());
             SlashCommandManager.register(new MusicPlayCommand());
             SlashCommandManager.register(new MusicVolumeCommand());
             SlashCommandManager.register(new UserInfoCommand());
+            SlashCommandManager.register(new EarthQuakeValueCommand());
             SlashCommandManager.register(new EarthQuakeResetCommand());
             SlashCommandManager.register(new EarthQuakeRegisterCommand());
             SlashCommandManager.register(new EarthQuakePrintCommand());
