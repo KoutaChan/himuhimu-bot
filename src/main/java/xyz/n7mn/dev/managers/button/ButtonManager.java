@@ -2,7 +2,6 @@ package xyz.n7mn.dev.managers.button;
 
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import xyz.n7mn.dev.events.ButtonEvent;
-import xyz.n7mn.dev.managers.UseButton;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

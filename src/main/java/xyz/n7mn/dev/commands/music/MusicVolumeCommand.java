@@ -1,7 +1,6 @@
 package xyz.n7mn.dev.commands.music;
 
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -10,7 +9,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
-import xyz.n7mn.dev.managers.UseButton;
+import xyz.n7mn.dev.managers.button.UseButton;
 import xyz.n7mn.dev.managers.button.ButtonInteract;
 import xyz.n7mn.dev.managers.slash.Option;
 import xyz.n7mn.dev.managers.slash.SlashCommand;
@@ -43,7 +42,7 @@ public class MusicVolumeCommand extends SlashCommandListener {
             if (volume != null) {
                 data.setVolume(volume.getAsInt());
             }
-            event.replyEmbeds(createVolumeEmbeds(data))
+            event.replyEmbeds(createVolumeEmbeds(data).build())
                     .setActionRow(Button.of(ButtonStyle.DANGER, "volume-decrease-10", "-10%", Emoji.fromUnicode("U+23EE")),
                             Button.of(ButtonStyle.DANGER, "volume-decrease-1", "-1%", Emoji.fromUnicode("U+23EA")),
                             Button.of(ButtonStyle.SUCCESS, "volume-increase-1", "+1%", Emoji.fromUnicode("U+23E9")),
@@ -64,21 +63,24 @@ public class MusicVolumeCommand extends SlashCommandListener {
             final boolean changed = data.setVolume(isIncrease
                     ? data.getVolume() + Integer.parseInt(event.getComponentId().replaceAll("[^0-9]", ""))
                     : data.getVolume() - Integer.parseInt(event.getComponentId().replaceAll("[^0-9]", "")));
-            event.editMessageEmbeds(createVolumeEmbeds(data, changed ? Color.GREEN : Color.RED)).queue();
+            event.editMessageEmbeds(createVolumeEmbeds(new EmbedBuilder().addField("最後の使用者", event.getMember().getAsMention(), false), data, changed ? Color.GREEN : Color.RED).build()).queue();
         }
     }
 
-    public MessageEmbed createVolumeEmbeds(AudioData data) {
+    public EmbedBuilder createVolumeEmbeds(AudioData data) {
         return createVolumeEmbeds(data, Color.GREEN);
     }
 
-    public MessageEmbed createVolumeEmbeds(AudioData data, Color color) {
-        return new EmbedBuilder()
+    public EmbedBuilder createVolumeEmbeds(AudioData data, Color color) {
+        return createVolumeEmbeds(new EmbedBuilder(), data, color);
+    }
+
+    public EmbedBuilder createVolumeEmbeds(EmbedBuilder embedBuilder, AudioData data, Color color) {
+        return embedBuilder
                 .setColor(color)
                 .setTitle("ボリュームコントローラー")
                 .setDescription("ボタンをクリックすることで変更可能です")
                 .addField("現在のボリューム", data.getVolume() + "%", false)
-                .addField("最大音量", data.getMaxVolume() + "%", false)
-                .build();
+                .addField("最大音量", data.getMaxVolume() + "%", false);
     }
 }

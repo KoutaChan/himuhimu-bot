@@ -5,16 +5,11 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 import net.dv8tion.jda.api.entities.User;
 import org.jetbrains.annotations.NotNull;
-import xyz.n7mn.dev.CeVIOBuilder;
-import xyz.n7mn.dev.CeVIOJava;
-import xyz.n7mn.dev.data.enums.PlatformType;
 import xyz.n7mn.dev.voice.AudioListener;
-import xyz.n7mn.dev.voice.music.AudioTrackData;
 import xyz.n7mn.dev.voice.roid.ai.CeVIOAIProvider;
 import xyz.n7mn.dev.voice.roid.creative.CeVIOCreativeProvider;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -71,6 +66,32 @@ public class RoidScheduler extends AudioListener {
         if (endReason.mayStartNext) {
             //load(queue.poll());
         }
+    }
+
+    @Override
+    public AudioTrack stopCurrentTrack() {
+        AudioTrack track = player.getPlayingTrack();
+        if (track != null) {
+            player.destroy();
+        }
+        return track;
+    }
+
+    @Override
+    public List<AudioTrack> skip(int size) {
+        Iterator<AudioTrack> audioTrack = queue.iterator();
+        if (player.getPlayingTrack() == null) {
+            return Collections.emptyList();
+        }
+        List<AudioTrack> tracks = new ArrayList<>();
+        tracks.add(stopCurrentTrack());
+        for (int i = 0; i < size - 1; i++) {
+            if (audioTrack.hasNext()) {
+                tracks.add(audioTrack.next());
+                audioTrack.remove();
+            }
+        }
+        return tracks;
     }
 
     @Override

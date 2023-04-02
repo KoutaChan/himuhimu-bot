@@ -25,6 +25,7 @@ import xyz.n7mn.dev.voice.AudioListener;
 import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -46,8 +47,7 @@ public class MusicScheduler extends AudioListener {
     }
 
     public void queue(AudioTrackData data) {
-        boolean started = player.startTrack(data.track(), true);
-
+        boolean started = player.startTrack(data.track(), false);
         if (!started) {
             this.track = data.getTrack();
         } else {
@@ -66,6 +66,7 @@ public class MusicScheduler extends AudioListener {
 
     @Override
     public void load(AudioTrack track) {
+        this.track = track;
         player.startTrack(track, true);
     }
 
@@ -111,7 +112,7 @@ public class MusicScheduler extends AudioListener {
                                     JSONObject id = videoInfo.getJSONObject("id");
                                     JSONObject snippet = videoInfo.getJSONObject("snippet");
                                     content.addField("[" + (i + 1) + "]" + HtmlUtils.getString(snippet.getString("title")), "https://www.youtube.com/watch?v=" + id.getString("videoId"), false);
-                                    components.add(Button.secondary("music-id-" + (i + 1), Emoji.fromUnicode("U+003" + (i + 1) + " U+FE0F U+20E3")));
+                                    components.add(Button.secondary("music-id-" + i, Emoji.fromUnicode("U+003" + (i + 1) + " U+FE0F U+20E3")));
                                 }
                                 if (components.isEmpty()) {
                                     content.addField("何も見つかりませんでした", "何を検索したんですか？", false);
@@ -122,6 +123,8 @@ public class MusicScheduler extends AudioListener {
                     }
                 });
     }
+
+
 
     public void searchAndPlay(IReplyCallback textChannel, String url) {
         manager.loadItem(url, new AudioLoadResultHandler() {
@@ -156,8 +159,8 @@ public class MusicScheduler extends AudioListener {
                     textChannel.getHook().editOriginalEmbeds(new EmbedBuilder()
                                     .setColor(Color.PINK)
                                     .setTitle(">> 再生する音楽を追加しました")
-                                    .addField("[~] タイトル", track.getInfo().title, false)
-                                    .addField("[!] URL", track.getInfo().uri, false)
+                                    .addField("[~] タイトル", playlist.getName(), false)
+                                    .addField("[!] URL", url, false)
                                     .addField("[+] 再生時間", TimeUtils.convertMillisecondsToFormat(total), false)
                                     .build())
                             .queue();
@@ -191,6 +194,10 @@ public class MusicScheduler extends AudioListener {
         });
     }
 
+    public AudioTrackData getNextAudioTrack() {
+        return queue.poll();
+    }
+
     @Override
     public void searchAndPlay(String url) {
         searchAndPlay(null, url);
@@ -199,13 +206,44 @@ public class MusicScheduler extends AudioListener {
     @Override
     public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason endReason) {
         if (this.repeat) {
-            player.playTrack(track.makeClone());
+            player.playTrack(this.track = track.makeClone());
         } else if (endReason.mayStartNext) {
-            player.playTrack(track);
-        } else {
-
+            AudioTrackData nextAudioTrack = getNextAudioTrack();
+            if (nextAudioTrack != null && nextAudioTrack.getTrack() != null) {
+                player.playTrack(this.track = nextAudioTrack.getTrack());
+            }
         }
         super.onTrackEnd(player, track, endReason);
+    }
+
+    @Override
+    public AudioTrack stopCurrentTrack() {
+        AudioTrack track = player.getPlayingTrack();
+        if (track != null) {
+            player.destroy();
+        }
+        return track;
+    }
+
+    @Override
+    public List<AudioTrack> skip(int size) {
+        if (player.getPlayingTrack() == null) {
+            return Collections.emptyList();
+        }
+        List<AudioTrack> tracks = new ArrayList<>();
+        tracks.add(stopCurrentTrack());
+        for (int i = 0; i < size - 1; i++) {
+            AudioTrackData data = queue.poll();
+            if (data == null) {
+                break;
+            }
+            tracks.add(data.getTrack());
+        }
+        AudioTrackData next = this.getNextAudioTrack();
+        if (next != null) {
+            load(next.getTrack());
+        }
+        return tracks;
     }
 
     public boolean isRepeat() {
@@ -218,6 +256,8 @@ public class MusicScheduler extends AudioListener {
 
     @Override
     public void exit() {
-        track.stop();
+        if (this.track != null) {
+            track.stop();
+        }
     }
 }

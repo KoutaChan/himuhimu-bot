@@ -13,7 +13,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu;
-import xyz.n7mn.dev.managers.UseButton;
+import xyz.n7mn.dev.managers.button.UseButton;
 import xyz.n7mn.dev.managers.button.ButtonInteract;
 import xyz.n7mn.dev.managers.slash.Option;
 import xyz.n7mn.dev.managers.slash.SlashCommand;
