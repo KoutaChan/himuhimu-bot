@@ -109,7 +109,9 @@ public class SlashCommandManager implements SlashEvent {
         for (Option option : slashCommand.options()) {
             if (option.type() != OptionType.UNKNOWN) {
                 OptionData optionData = new OptionData(option.type(), option.name(), option.description(), option.required(), option.autoComplete());
-                for (Choice choice : option.choices()) {
+                for (StringChoice choice : option.stringChoices()) {
+                    //幸い、チョイスは現在Stringでしか使用していません。
+                    //なので現在はStringで検索可能です
                     optionData.addChoice(choice.name(), choice.value());
                 }
                 data.addOptions(optionData);

@@ -6,10 +6,12 @@ import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.EntitySelectInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 import xyz.n7mn.dev.events.ButtonEventManager;
+import xyz.n7mn.dev.events.EntitySelectMenuEventManager;
 import xyz.n7mn.dev.events.MessageEventManager;
 import xyz.n7mn.dev.events.SlashEventManager;
 import xyz.n7mn.dev.util.DiscordUtil;
@@ -25,9 +27,9 @@ public class EventListener extends ListenerAdapter {
         }
         AudioData data = AudioManager.getAudio(event.getGuild());
         AudioChannel connectedChannel = data != null ? data.getAudioChannel() : getCurrentAudioChannel(event.getGuild());
+        //TODO: 多分 connectedChannelがnullのときは実行しなくてもいい
         if (getConnectedUsers(connectedChannel) == 0) {
             DiscordUtil.stop(event.getGuild());
-            System.out.println("Disconnected!");
         }
     }
 
@@ -67,6 +69,15 @@ public class EventListener extends ListenerAdapter {
         if (event.isFromGuild()) {
             SlashEventManager.getListeners().forEach(v -> {
                 v.onSlashCommandInteractionEvent(event);
+            });
+        }
+    }
+
+    @Override
+    public void onEntitySelectInteraction(EntitySelectInteractionEvent event) {
+        if (event.isFromGuild()) {
+            EntitySelectMenuEventManager.getListeners().forEach(v -> {
+                v.onEntitySelectMenuEvent(event);
             });
         }
     }

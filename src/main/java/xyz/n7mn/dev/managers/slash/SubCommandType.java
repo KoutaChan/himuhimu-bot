@@ -11,6 +11,7 @@ public enum SubCommandType {
     EARTHQUAKE(create("earthquake"), null, false),
     SETTINGS(create("settings", Permission.ADMINISTRATOR), null, false),
     SETTINGS_EARTHQUAKE(SETTINGS, new SubcommandGroupData("earthquake", "EarthQuake Settings SubGroups"), true),
+    SETTINGS_MUSIC(SETTINGS, new SubcommandGroupData("music", "Music Settings SubGroups"), true),
     NONE(null, null, false);
 
     private Object command;

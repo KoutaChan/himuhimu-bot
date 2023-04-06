@@ -1,19 +1,20 @@
-package xyz.n7mn.dev.commands.earthquake;
+package xyz.n7mn.dev.commands.earthquake.settings;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
+import xyz.n7mn.dev.managers.slash.StringChoice;
 import xyz.n7mn.dev.managers.slash.*;
-import xyz.n7mn.dev.managers.slash.Choice;
 import xyz.n7mn.dev.sqlite.EarthQuakeDB;
 import xyz.n7mn.dev.sqlite.SQLite;
 
 import java.awt.*;
+import java.util.Date;
 
 public class EarthQuakeValueCommand extends SlashCommandListener {
-    @SlashCommand(name = "value", description = "地震情報の設定", options = {@Option(type = OptionType.STRING, name = "type", description = "設定する内容", choices = {@Choice(name = "リアルタイム地震情報", value = "realtime_earthquake_info"), @Choice(name = "地震情報", value = "earthquake_info")}), @Option(type = OptionType.STRING, name = "value", description = "設定", choices = {@Choice(name = "オン", value = "on"), @Choice(name = "オフ", value = "off")}, required = false)}, commandType = SubCommandType.SETTINGS_EARTHQUAKE)
+    @SlashCommand(name = "value", description = "地震情報の設定", options = {@Option(type = OptionType.STRING, name = "type", description = "設定する内容", stringChoices = {@StringChoice(name = "リアルタイム地震情報", value = "realtime_earthquake_info"), @StringChoice(name = "地震情報", value = "earthquake_info")}), @Option(type = OptionType.STRING, name = "value", description = "設定", stringChoices = {@StringChoice(name = "オン", value = "on"), @StringChoice(name = "オフ", value = "off")}, required = false)}, commandType = SubCommandType.SETTINGS_EARTHQUAKE)
     public void onSlashCommandEvent(SlashCommandInteractionEvent event) {
         EarthQuakeDB.EarthQuakeData data = SQLite.INSTANCE.getEarthQuake().get(event.getGuild().getId());
         if (data == null) {
@@ -40,6 +41,7 @@ public class EarthQuakeValueCommand extends SlashCommandListener {
                 .setColor(Color.GREEN)
                 .addField("リアルタイム地震", data.isAnnounceRealTime() ? "オン" : "オフ", false)
                 .addField("地震情報", data.isAnnounceInfo() ? "オン" : "オフ", false)
+                .setTimestamp(new Date().toInstant())
                 .build();
     }
 }

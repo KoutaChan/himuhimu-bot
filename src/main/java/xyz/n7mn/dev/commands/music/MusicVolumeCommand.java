@@ -1,7 +1,6 @@
 package xyz.n7mn.dev.commands.music;
 
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -9,8 +8,8 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
-import xyz.n7mn.dev.managers.button.UseButton;
-import xyz.n7mn.dev.managers.button.ButtonInteract;
+import xyz.n7mn.dev.managers.search.button.ButtonInteract;
+import xyz.n7mn.dev.managers.search.button.UseButton;
 import xyz.n7mn.dev.managers.slash.Option;
 import xyz.n7mn.dev.managers.slash.SlashCommand;
 import xyz.n7mn.dev.managers.slash.SlashCommandListener;
@@ -27,30 +26,27 @@ public class MusicVolumeCommand extends SlashCommandListener {
     public void onSlashCommandEvent(SlashCommandInteractionEvent event) {
         AudioData data = getAudioData(event.getGuild());
         if (data == null) {
-            AudioChannelUnion channelUnion = getConnectedVoiceChannel(event.getMember());
-            if (channelUnion == null) {
-                event.replyEmbeds(getErrorEmbeds("ボイスチャンネルに接続してください").build()).queue();
-                return;
-            }
-            data = AudioManager.createAudio(AudioType.MUSIC, event.getGuildChannel(), channelUnion);
-        } else if (!data.getAudioChannel().equals(getConnectedVoiceChannel(event.getMember()))) {
+            event.replyEmbeds(getErrorEmbeds("現在ミュージックを流せる状態ではありません！ (理由: 現在ミュージックが流れていません)").build()).queue();
+            return;
+        }
+        if (data.getType() != AudioType.MUSIC) {
+            event.replyEmbeds(getErrorEmbeds("現在ミュージックを流せる状態ではありません！ (STATE=" + data.getType().name() + ")").build()).queue();
+            return;
+        }
+        if (!data.getAudioChannel().equals(getConnectedVoiceChannel(event.getMember()))) {
             event.replyEmbeds(getErrorEmbeds("ひむひむちゃんBotと同じボイスチャンネルに参加してください").build()).queue();
             return;
         }
-        if (data.getType() == AudioType.MUSIC) {
-            OptionMapping volume = event.getOption("volume");
-            if (volume != null) {
-                data.setVolume(volume.getAsInt());
-            }
-            event.replyEmbeds(createVolumeEmbeds(data).build())
-                    .setActionRow(Button.of(ButtonStyle.DANGER, "volume-decrease-10", "-10%", Emoji.fromUnicode("U+23EE")),
-                            Button.of(ButtonStyle.DANGER, "volume-decrease-1", "-1%", Emoji.fromUnicode("U+23EA")),
-                            Button.of(ButtonStyle.SUCCESS, "volume-increase-1", "+1%", Emoji.fromUnicode("U+23E9")),
-                            Button.of(ButtonStyle.SUCCESS, "volume-increase-10", "+10%", Emoji.fromUnicode("U+23ED")))
-                    .queue();
-        } else {
-            event.replyEmbeds(getErrorEmbeds("現在ミュージックのボリュームを変更できる状態ではありません！ (STATE=" + data.getType().name() + ")").build()).queue();
+        OptionMapping volume = event.getOption("volume");
+        if (volume != null) {
+            data.setVolume(volume.getAsInt());
         }
+        event.replyEmbeds(createVolumeEmbeds(data).build())
+                .setActionRow(Button.of(ButtonStyle.DANGER, "volume-decrease-10", "-10%", Emoji.fromUnicode("U+23EE")),
+                        Button.of(ButtonStyle.DANGER, "volume-decrease-1", "-1%", Emoji.fromUnicode("U+23EA")),
+                        Button.of(ButtonStyle.SUCCESS, "volume-increase-1", "+1%", Emoji.fromUnicode("U+23E9")),
+                        Button.of(ButtonStyle.SUCCESS, "volume-increase-10", "+10%", Emoji.fromUnicode("U+23ED")))
+                .queue();
     }
 
     @ButtonInteract(regex = "volume-(decrease|increase)-[0-9]*")
@@ -76,8 +72,7 @@ public class MusicVolumeCommand extends SlashCommandListener {
     }
 
     public EmbedBuilder createVolumeEmbeds(EmbedBuilder embedBuilder, AudioData data, Color color) {
-        return embedBuilder
-                .setColor(color)
+        return embedBuilder.setColor(color)
                 .setTitle("ボリュームコントローラー")
                 .setDescription("ボタンをクリックすることで変更可能です")
                 .addField("現在のボリューム", data.getVolume() + "%", false)

@@ -431,13 +431,21 @@ public class EarthQuakeYahooMonitor {
     public void writePSWave(@NotNull BufferedImage bufferedImage, @NotNull JSONObject psWave) {
         JSONArray items = psWave.getJSONArray("items");
         for (int i = 0; i < items.length(); i++) {
-            JSONObject item = items.getJSONObject(i);
-
+            JSONObject item = items.optJSONObject(i);
+            if (item == null)  {
+                return;
+            }
+            String pRadiusString = item.optString("pRadius");
+            String sRadiusString = item.optString("sRadius");
+            //Yahoo EarthQuake: なぜか知らないけど、Yahoo EarthQuakeが時々欠損した状態で送ってくる
+            if (pRadiusString == null || sRadiusString == null) {
+                return;
+            }
             Pair<Double, Double> pixelXY = convertGeoToPixel(Double.parseDouble(item.getString("latitude").replaceAll("N", "")), Double.parseDouble(item.getString("longitude").replaceAll("E", ""))
                     , 1200, 900, 116.45558291796095, 153.74441708208371, 23.640487987015774);
 
-            final int pRadius = (int) Double.parseDouble(item.getString("pRadius"));
-            final int sRadius = (int) Double.parseDouble(item.getString("sRadius"));
+            final int pRadius = (int) Double.parseDouble(pRadiusString);
+            final int sRadius = (int) Double.parseDouble(sRadiusString);
 
             Graphics2D graphics2D = bufferedImage.createGraphics();
 

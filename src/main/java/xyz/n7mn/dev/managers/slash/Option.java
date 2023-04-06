@@ -15,5 +15,5 @@ public @interface Option {
     String description() default "None";
     boolean required() default true;
     boolean autoComplete() default false;
-    Choice[] choices() default {};
+    StringChoice[] stringChoices() default {};
 }

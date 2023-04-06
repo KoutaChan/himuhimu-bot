@@ -11,7 +11,7 @@ public class ButtonEventManager {
         return listeners;
     }
 
-    public static void addListener(ButtonEvent... messageListeners) {
-        listeners.addAll(Arrays.asList(messageListeners));
+    public static void addListener(ButtonEvent... buttonEvents) {
+        listeners.addAll(Arrays.asList(buttonEvents));
     }
 }

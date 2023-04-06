@@ -34,7 +34,7 @@ public class MusicSkipCommand extends SlashCommandListener {
         }
         final int size = event.getOption("size", 1, OptionMapping::getAsInt);
         if (size <= 0) {
-            event.replyEmbeds(getErrorEmbeds("サイズがおかしいです、1以上を選択してください").build()).queue();
+            event.replyEmbeds(getErrorEmbeds("サイズがおかしいです！ 1以上を入力してください").build()).queue();
             return;
         }
         List<AudioTrack> skippedAudioTrack = data.getListener().skip(event.getOption("size", 1, OptionMapping::getAsInt));

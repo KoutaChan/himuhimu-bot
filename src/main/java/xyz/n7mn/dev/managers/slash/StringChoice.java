@@ -1,6 +1,6 @@
 package xyz.n7mn.dev.managers.slash;
 
-public @interface Choice {
+public @interface StringChoice {
     String name();
     String value();
 }

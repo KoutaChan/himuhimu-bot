@@ -5,22 +5,18 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import xyz.n7mn.dev.commands.earthquake.EarthQuakePrintCommand;
-import xyz.n7mn.dev.commands.earthquake.EarthQuakeRegisterCommand;
-import xyz.n7mn.dev.commands.earthquake.EarthQuakeResetCommand;
-import xyz.n7mn.dev.commands.earthquake.EarthQuakeValueCommand;
+import xyz.n7mn.dev.commands.earthquake.settings.EarthQuakeRegisterCommand;
+import xyz.n7mn.dev.commands.earthquake.settings.EarthQuakeResetCommand;
+import xyz.n7mn.dev.commands.earthquake.settings.EarthQuakeValueCommand;
 import xyz.n7mn.dev.commands.general.StatusCommand;
-import xyz.n7mn.dev.commands.music.MusicPlayCommand;
-import xyz.n7mn.dev.commands.music.MusicRepeatCommand;
-import xyz.n7mn.dev.commands.music.MusicSkipCommand;
-import xyz.n7mn.dev.commands.music.MusicVolumeCommand;
+import xyz.n7mn.dev.commands.music.*;
+import xyz.n7mn.dev.commands.other.HelpCommand;
 import xyz.n7mn.dev.commands.other.UserInfoCommand;
 import xyz.n7mn.dev.earthquake.EarthQuakeYahoo;
 import xyz.n7mn.dev.earthquake.EarthQuakeYahooMonitor;
-import xyz.n7mn.dev.events.ButtonEventManager;
 import xyz.n7mn.dev.events.MessageEventManager;
 import xyz.n7mn.dev.events.SlashEventManager;
 import xyz.n7mn.dev.events.common.AddCoinManager;
-import xyz.n7mn.dev.managers.button.ButtonManager;
 import xyz.n7mn.dev.managers.message.MessageCommandManager;
 import xyz.n7mn.dev.managers.slash.SlashCommandManager;
 import xyz.n7mn.dev.util.ConfigManager;
@@ -46,19 +42,19 @@ public class HimuHimuMain {
                 earthQuakeYahooMonitor = new EarthQuakeYahooMonitor(jda);
                 earthQuakeYahooMonitor.startNewThread();
             }
-
             //Listeners - HimuHimu Base
             MessageEventManager.addListener(new MessageCommandManager(), new AddCoinManager());
             SlashEventManager.addListener(new SlashCommandManager());
-            ButtonEventManager.addListener(new ButtonManager());
             //Command
             //全部のコマンドを消す: ディスコードは消してくれないため
             //安全のためスレッドを停止して登録させる、偉いよね？
             jda.retrieveCommands().complete().forEach(d -> d.delete().complete());
+            SlashCommandManager.register(new HelpCommand());
             SlashCommandManager.register(new StatusCommand());
             SlashCommandManager.register(new MusicRepeatCommand());
             SlashCommandManager.register(new MusicPlayCommand());
             SlashCommandManager.register(new MusicSkipCommand());
+            SlashCommandManager.register(new MusicStopCommand());
             SlashCommandManager.register(new MusicVolumeCommand());
             SlashCommandManager.register(new UserInfoCommand());
             SlashCommandManager.register(new EarthQuakeValueCommand());

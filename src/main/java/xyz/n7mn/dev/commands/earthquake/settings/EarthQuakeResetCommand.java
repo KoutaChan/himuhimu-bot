@@ -1,12 +1,12 @@
-package xyz.n7mn.dev.commands.earthquake;
+package xyz.n7mn.dev.commands.earthquake.settings;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
-import xyz.n7mn.dev.managers.button.UseButton;
-import xyz.n7mn.dev.managers.button.ButtonInteract;
+import xyz.n7mn.dev.managers.search.button.UseButton;
+import xyz.n7mn.dev.managers.search.button.ButtonInteract;
 import xyz.n7mn.dev.managers.slash.SlashCommand;
 import xyz.n7mn.dev.managers.slash.SlashCommandListener;
 import xyz.n7mn.dev.managers.slash.SubCommandType;

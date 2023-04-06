@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
 public class HimuNicoAudioSourceManager implements AudioSourceManager, HttpConfigurable {
-    private HttpInterfaceManager httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
+    private final HttpInterfaceManager httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
     /* ニコニコのsoから始まるリンクはアニメなど・・レガシー。 */
     private static final String TRACK_URL_REGEX = "^(?:http://|https://|)(?:www\\.|)nicovideo\\.jp/watch/((so|sm)[0-9]+)(?:\\?.*|)$";
     private static final Pattern trackUrlPattern = Pattern.compile(TRACK_URL_REGEX);
@@ -185,7 +185,11 @@ public class HimuNicoAudioSourceManager implements AudioSourceManager, HttpConfi
 
     @Override
     public void shutdown() {
-
+        try {
+            httpInterfaceManager.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public HttpInterface getHttpInterface() {
