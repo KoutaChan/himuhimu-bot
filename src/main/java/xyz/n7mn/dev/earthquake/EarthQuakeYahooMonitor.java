@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.apache.commons.io.IOUtils;
@@ -12,8 +13,10 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import xyz.n7mn.dev.earthquake.data.ResultData;
+import xyz.n7mn.dev.earthquake.data.AnimatedGifEncoder;
+import xyz.n7mn.dev.sqlite.EarthQuakeDB;
 import xyz.n7mn.dev.sqlite.SQLite;
+import xyz.n7mn.dev.util.CommonUtils;
 import xyz.n7mn.dev.util.pair.Pair;
 
 import javax.imageio.ImageIO;
@@ -57,29 +60,35 @@ public class EarthQuakeYahooMonitor {
     public static Color si_1 = Color.decode("#90b3ca"); //-2
     public static Color si_0 = Color.decode("#97b7cc"); //-3
     public static Color BACKGROUND_COLOR = Color.decode("#343434");
-
+    // Big Position Map!
     private JSONObject positions;
-    private BufferedImage base, hypo;
-
+    // Base Map
+    private BufferedImage base;
+    // Hypo Image
+    private BufferedImage hypo;
+    // Is Synced Map Data
     private boolean synced = true;
+    // Synced Map Data
     private JSONArray map;
-    private final Map<String, List<Message>> messages = new HashMap<>();
+    // EarthQuake Data
+    private final Map<String, EarthQuakeBigData> earthQuakes = new HashMap<>();
+    // Queue Request Image!
     private final List<Consumer<BufferedImage>> queue = new ArrayList<>();
-
-    //task and worker
+    // Task and Worker
     private Thread worker;
     private Timer timer;
-
+    // Time Format
     private final SimpleDateFormat formatDays = new SimpleDateFormat("yyyyMMdd");
     private final SimpleDateFormat formatSeconds = new SimpleDateFormat("yyyyMMddHHmmss");
-
+    // Failed Count
     private int retry = 0;
-    private int update;
-
+    // Should Update Message?
+    private int canEdit;
+    // Last Ping = avg. 1000 ms
     private long lastPing;
+    // Instance Of JDA
+    // TODO: Remove JDA.
     private final JDA JDA;
-
-    private final List<Consumer<byte[]>> request = new ArrayList<>();
 
     public EarthQuakeYahooMonitor(JDA JDA) {
         this.JDA = JDA;
@@ -95,16 +104,15 @@ public class EarthQuakeYahooMonitor {
     }
 
     public static void main(String[] args) {
-        new EarthQuakeYahooMonitor(null)
-                .startNewThread();
+        new EarthQuakeYahooMonitor(null).startNewThread();
     }
 
     public void execute() {
         Date date = lastPing != 0 ? retry > 1
                 ? new Date(lastPing) : new Date(lastPing + 1000L)
                 //Sindo 4 Image 2022/11/09 17:40
-                //: new Date(1667983225000L);
-                : new Date(ZonedDateTime.ofInstant(Instant.now(), ZoneId.of("Asia/Tokyo")).toInstant().toEpochMilli());
+                : new Date(1667983225000L);
+                //: new Date(ZonedDateTime.ofInstant(Instant.now(), ZoneId.of("Asia/Tokyo")).toInstant().toEpochMilli());
 
         try {
             BufferedImage bufferedImage = new BufferedImage(base.getWidth(), base.getHeight(), BufferedImage.TYPE_INT_RGB);
@@ -121,23 +129,25 @@ public class EarthQuakeYahooMonitor {
             JSONObject jsonObject = new JSONObject(document.text());
 
             final boolean isEarthQuake = !jsonObject.isNull("hypoInfo");
+            // 無駄に実行する必要はありません
+            if (!isEarthQuake && this.queue.isEmpty()) {
+                this.reset();
+                return;
+            }
             JSONObject realTimeData = jsonObject.getJSONObject("realTimeData");
             String intensity = realTimeData.getString("intensity");
             byte[] bytes = intensity.getBytes(StandardCharsets.UTF_8);
             getData(map != null && bytes.length == map.length());
-
             if (map.length() != bytes.length) {
                 throw new RuntimeException("Failed Sync");
             }
-
-            Map<Pair<Double, Double>, Integer> hashMap = new HashMap<>();
-
-            //PS WAVE
+            // PS WAVE
             JSONObject psWave = jsonObject.optJSONObject("psWave");
             if (isEarthQuake && psWave != null) {
                 writePSWave(bufferedImage, psWave);
             }
-
+            // EarthQuake の観測値をまとめるマップ
+            Map<Pair<Double, Double>, Integer> hashMap = new HashMap<>();
             for (int i = 0; i < map.length(); i++) {
                 //ヤフーリアルタイムモニタの色の表示方法は byteを -100したときに残った数字です。
                 //最大で21段階あります
@@ -151,11 +161,11 @@ public class EarthQuakeYahooMonitor {
                     hashMap.put(Pair.of(latitude, longitude), by);
                 }
             }
-            //Yahooリアルタイムモニタでは震度が大きい順に上から表示されるので、上書きで正円が消えないように。
-            //小さい順にソートする。
+            // Yahooリアルタイムモニタでは震度が大きい順に上から表示されるので、上書きで正円が消えないように。
+            // 小さい順にソートする。
             List<Map.Entry<Pair<Double, Double>, Integer>> entries = hashMap.entrySet().stream().sorted(Comparator.comparingInt(Map.Entry::getValue))
                     .collect(Collectors.toList());
-            //finally, you can write!
+            // finally, you can write!
             for (Map.Entry<Pair<Double, Double>, Integer> entry : entries) {
                 write(g2d, entry.getKey(), entry.getValue());
             }
@@ -163,11 +173,11 @@ public class EarthQuakeYahooMonitor {
             g2d.dispose();
             //TODO: ADD Text Options
             BufferedImage finalImage = additionalText(bufferedImage, jsonObject, entries);
-            //you can sent messages...!
+            // メッセージを送ったり GIFに変えたりする機構
             if (isEarthQuake) {
-                checkMessage(jsonObject, finalImage);
+                this.checkAndSendMessage(jsonObject, finalImage);
             } else {
-                this.messages.clear();
+                this.reset();
             }
             //Events...
             for (Consumer<BufferedImage> queue : this.queue) {
@@ -177,7 +187,6 @@ public class EarthQuakeYahooMonitor {
             retry = 0;
         } catch (Exception ex) {
             retry++;
-
             if (ex instanceof UnknownHostException) {
                 if (retry % 10 == 0d) {
                     System.out.printf("[⚠] 不明なホストです、ホスト元またはあなたのネットワークがダウンしている可能性がります%n>>> このエラーが継続している場合は10秒ごとにエラーが送信されます%n");
@@ -188,95 +197,75 @@ public class EarthQuakeYahooMonitor {
                 ex.printStackTrace();
             }
         }
-
         lastPing = date.getTime();
     }
 
-    public boolean canOverride() {
-        return isUpdate();
-    }
-
     //3 seconds!
-    public boolean isUpdate() {
-        final boolean isUpdate = update == 0;
-        update = isUpdate ? 3 : update - 1;
-
-        return isUpdate;
+    public boolean canEdit() {
+        final boolean canEdit = this.canEdit == 0;
+        this.canEdit = canEdit ? 3 : this.canEdit - 1;
+        return canEdit;
     }
 
-    public void checkMessage(JSONObject object, BufferedImage finalImage) {
+    public void checkAndSendMessage(JSONObject object, BufferedImage bufferedImage) {
         JSONArray array = object.getJSONObject("hypoInfo").getJSONArray("items");
+        //BufferedImage を Byteに変換する。
+        byte[] byteImage = CommonUtils.toByteArray(bufferedImage);
+        List<String> reportIds = new ArrayList<>() {{
+            for (int i = 0; i < array.length(); i++) {
+                String reportId = array.getJSONObject(i).getString("reportId");
+                EarthQuakeBigData earthQuakeBigData = earthQuakes.computeIfAbsent(reportId, d -> {
+                    final EarthQuakeBigData earthQuake = new EarthQuakeBigData();
+                    sent(byteImage, earthQuake::addSended);
+                    return earthQuake;
+                });
+                if (canEdit()) {
+                    earthQuakeBigData.editMessages(bufferedImage, byteImage);
+                } else {
+                    earthQuakeBigData.addRaw(bufferedImage);
+                }
+                add(reportId);
+            }
+        }};
+        // reportIdが含まれていなかったら消す！
+        removeAndTry(reportIds);
+    }
 
-        final List<String> reportIds = new ArrayList<>();
+    public void removeAndTry(List<String> reportIds) {
+        earthQuakes.entrySet().stream()
+                .filter(key -> reportIds.stream().noneMatch(id -> key.getKey().equals(id)))
+                .forEach(entry -> {
+                    entry.getValue().asyncEncode();
+                    this.earthQuakes.remove(entry.getKey());
+                });
+    }
 
-        EmbedBuilder builder = new EmbedBuilder()
+    public void reset() {
+        removeAndTry(Collections.emptyList());
+    }
+
+    public void sent(byte[] bufferedImage, Consumer<Message> onCompletes) {
+        List<EarthQuakeDB.EarthQuakeData> data = SQLite.INSTANCE.getEarthQuake().getAll();
+        if (data.isEmpty()) {
+            return;
+        }
+        MessageEmbed messageEmbed = new EmbedBuilder()
                 .setTitle("地震速報")
                 .setDescription("すべての情報は予測です | 大きな誤差・誤検知を含んでいる可能性があります")
                 .setFooter(DateFormat.getDateTimeInstance().format(new Date()) + "に作成されました | 防災科研（NIED）| Yahoo")
-                //.addField("・ 予想最大震度", sindo, true)
-                //.addField("・ 予測マグニチュード", main_element.getElementById("map-message-mag-value").text(), true)
-                //.addField("・ 予想深さ", main_element.getElementById("map-message-depth-value").text(), true)
-                //.addField("・ 地震発生地点", area, true)
-                //.addField("・ 予報を検知", num, true)
-                .setImage("attachment://earthquake.png");
+                .setImage("attachment://earthquake.png")
+                .build();
 
-        byte[] file = toByteArray(finalImage);
-
-        for (int i = 0; i < array.length(); i++) {
-            String reportId = array.getJSONObject(i).getString("reportId");
-            reportIds.add(reportId);
-
-            if (!messages.containsKey(reportId)) {
-                EarthQuakeUtilities.setResultData(new ResultData(builder, builder, file, false));
-                sendToDiscord(JDA, file, message -> messages.put(reportId, message));
-            } else if (isUpdate()) {
-                Iterator<Message> it = messages.get(reportId).iterator();
-
-                while (it.hasNext()) {
-                    try {
-                        it.next().editMessageEmbeds(builder.build())
-                                .setFiles(FileUpload.fromData(file, "earthquake.png"))
-                                .queue();
-                    } catch (Exception ex) {
-                        it.remove();
+        data.stream().filter(EarthQuakeDB.EarthQuakeData::isAnnounceRealTime)
+                .forEachOrdered(earthQuakeData -> {
+                    Guild guild = JDA.getGuildById(earthQuakeData.getGuild());
+                    GuildMessageChannelUnion textChannel = guild != null ? guild.getChannelById(GuildMessageChannelUnion.class, earthQuakeData.getChannel()) : null;
+                    if (textChannel != null && textChannel.canTalk()) {
+                        textChannel.sendMessageEmbeds(messageEmbed)
+                                .setFiles(FileUpload.fromData(bufferedImage, "earthquake.png"))
+                                .queue(onCompletes);
                     }
-                }
-            }
-        }
-
-        //remove if ended (todo: support gif) サイズが足りなくで挫折
-        messages.keySet().stream().filter(key -> reportIds.stream().noneMatch(key::equalsIgnoreCase)).forEach(messages::remove);
-    }
-
-    public static byte[] toByteArray(BufferedImage image) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try {
-            ImageIO.write(image, "png", out);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return out.toByteArray();
-    }
-
-    public void sendToDiscord(JDA INSTANCE, byte[] file, Consumer<List<Message>> message) {
-        Map<String, String> map = SQLite.INSTANCE.getEarthQuake().getLegacyAll();
-
-        List<Message> messages = new ArrayList<>();
-
-        map.forEach((g, t) -> {
-            Guild guild = INSTANCE.getGuildById(g);
-            GuildMessageChannelUnion textChannel = guild != null ? guild.getChannelById(GuildMessageChannelUnion.class, t) : null;
-
-            if (textChannel != null && textChannel.canTalk()) {
-                messages.add(textChannel.sendMessageEmbeds(EarthQuakeUtilities.getResultData().getEmbedBuilder().build())
-                        .addFiles(FileUpload.fromData(file, "earthquake.png"))
-                        .complete());
-            }
-        });
-
-        System.out.println("[Yahoo-RealTime] およそ" + map.size() + " 件送信！");
-
-        message.accept(messages);
+                });
     }
 
     public BufferedImage additionalText(BufferedImage bufferedImage, JSONObject object, List<Map.Entry<Pair<Double, Double>, Integer>> entries) {
@@ -322,7 +311,6 @@ public class EarthQuakeYahooMonitor {
                 int y = 100 * (i + 1) + (i * 25);
 
                 drawLine(g2dInformation, Color.GRAY, startingPos, y - 25, startingPos, y + 100);
-
                 g2dInformation.drawString(String.format("震源地 >>> %s (%s報)", item.getString("regionName"), getReportNum(item)), x, y);
                 g2dInformation.drawString(String.format("予測震度 >>> %s (M %s)", item.getString("calcintensity"), item.getString("magnitude")), x, 25 + y);
                 g2dInformation.drawString("予想深さ >>> " + item.getString("depth"), x, 50 + y);
@@ -413,11 +401,10 @@ public class EarthQuakeYahooMonitor {
     }
 
     public void drawLine(Graphics2D graphics2D, Color color, int x1, int y1, int x2, int y2) {
-        Color temp = graphics2D.getColor();
-
+        Color oldColor = graphics2D.getColor();
         graphics2D.setColor(color);
         graphics2D.drawLine(x1, y1, x2, y2);
-        graphics2D.setColor(temp);
+        graphics2D.setColor(oldColor);
     }
 
     //left lng=116.45558291793395
@@ -427,7 +414,7 @@ public class EarthQuakeYahooMonitor {
         JSONArray items = psWave.getJSONArray("items");
         for (int i = 0; i < items.length(); i++) {
             JSONObject item = items.optJSONObject(i);
-            if (item == null)  {
+            if (item == null) {
                 return;
             }
             String pRadiusString = item.optString("pRadius");
@@ -527,7 +514,6 @@ public class EarthQuakeYahooMonitor {
             Document document = Jsoup.connect("https://weather-kyoshin.west.edge.storage-yahoo.jp/SiteList/sitelist.json")
                     .ignoreContentType(true)
                     .get();
-
             map = new JSONObject(document.text()).getJSONArray("items");
         }
         synced = f;
@@ -567,5 +553,72 @@ public class EarthQuakeYahooMonitor {
         double y = mapHeight - ((worldMapWidth / 2 * Math.log((1 + Math.sin(latitudeRad)) / (1 - Math.sin(latitudeRad)))) - mapOffsetY);
 
         return new Pair<>(x, y);
+    }
+
+    private static class EarthQuakeBigData {
+        private List<Message> sended = new ArrayList<>();
+        private List<BufferedImage> raw = new ArrayList<>();
+        private long length = 0;
+
+        public List<BufferedImage> getRaw() {
+            return raw;
+        }
+
+        public List<Message> getSended() {
+            return sended;
+        }
+
+        public void addSended(Message message) {
+            this.sended.add(message);
+        }
+
+        public void addRaw(BufferedImage bufferedImage) {
+            this.raw.add(bufferedImage);
+        }
+
+        public void editMessages(BufferedImage bufferedImage, byte[] byteImage) {
+            this.sended.forEach(action -> action.editMessageEmbeds(action.getEmbeds())
+                    .setFiles(FileUpload.fromData(byteImage, "earthquake.png"))
+                    .queue());
+            length += byteImage.length;
+            if (length <= 25000000) {
+                raw.add(bufferedImage);
+            }
+        }
+
+        public void asyncEncode() {
+            new Thread(this::encode).start();
+        }
+
+        public void encode() {
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            AnimatedGifEncoder encoder = new AnimatedGifEncoder();
+            encoder.setFrameRate(1);
+            encoder.start(output);
+            for (BufferedImage bufferedImage : this.raw) {
+                encoder.addFrame(bufferedImage);
+            }
+            if (encoder.finish()) {
+                byte[] bytes = output.toByteArray();
+                EmbedBuilder embedBuilder = new EmbedBuilder()
+                        .setTitle("地震速報 [GIF REPLAY!]")
+                        .setDescription("すべての情報は予測です | 大きな誤差・誤検知を含んでいる可能性があります")
+                        .setFooter(DateFormat.getDateTimeInstance().format(new Date()) + "に作成されました | 防災科研（NIED）| Yahoo")
+                        .setImage("attachment://earthquake.gif");
+                if (length > 25000000) {
+                    embedBuilder.addField("⚠途中で途切れている可能性があります", "サイズが足りませんでした (25MB)", false);
+                }
+                this.sended.forEach(action -> action.editMessageEmbeds(embedBuilder.build())
+                        .setFiles(FileUpload.fromData(bytes, "earthquake.gif"))
+                        .queue());
+            }
+            remove();
+        }
+
+        public void remove() {
+            this.sended = null;
+            this.raw = null;
+            this.length = 0;
+        }
     }
 }
