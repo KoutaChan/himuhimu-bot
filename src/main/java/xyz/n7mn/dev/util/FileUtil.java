@@ -23,7 +23,6 @@ public class FileUtil {
     }
 
     public static Map<String, String> getFileLine(Path path) {
-
         Map<String, String> key = new HashMap<>();
 
         try (Stream<String> lines = Files.lines(path, Charset.defaultCharset())) {

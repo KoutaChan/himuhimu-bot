@@ -34,7 +34,6 @@ public class RoidScheduler extends AudioListener {
         super(player);
     }
 
-
     @Override
     public void queue(AudioTrack track) {
         boolean started = player.startTrack(track, true);

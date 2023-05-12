@@ -13,6 +13,5 @@ public @interface SlashCommand {
     String name();
     String description() default "-";
     Option[] options() default @Option(type = OptionType.UNKNOWN, name = "2.0 Implement");
-    CommandType type() default CommandType.OTHER;
     SubCommandType commandType() default SubCommandType.NONE;
 }

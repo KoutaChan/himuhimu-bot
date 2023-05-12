@@ -49,11 +49,11 @@ public class SlashCommandManager implements SlashEvent {
                     Command command = actual.setAsCommand(copyAction(actual.asCommand(), subCommandType.getSubcommandGroupData().getName(), data).complete());
                     //Samples -> settings earthquake register
                     //Samples -> settings earthquake reset
-                    listeners.put(command.getName() + " " + subCommandType.getSubcommandGroupData().getName() + " " + data.getName(), new SlashCommandImpl(listener, data, slashCommand, method, command, true));
+                    listeners.put(command.getName() + " " + subCommandType.getSubcommandGroupData().getName() + " " + data.getName(), new SlashCommandImpl(listener, data, slashCommand, method, command, subCommandType));
                 } else {
                     SubcommandData data = createSubCommand(slashCommand);
                     Command command = subCommandType.setAsCommand(copyAction(subCommandType.asCommand()).addSubcommands(data).complete());
-                    listeners.put(command.getName() + " " + data.getName(), new SlashCommandImpl(listener, data, slashCommand, method, command, true));
+                    listeners.put(command.getName() + " " + data.getName(), new SlashCommandImpl(listener, data, slashCommand, method, command, subCommandType));
                 }
             } else {
                 CommandCreateAction data = HimuHimuMain.getJDA().upsertCommand(slashCommand.name(), slashCommand.description());
@@ -63,7 +63,7 @@ public class SlashCommandManager implements SlashEvent {
                     }
                 }
                 Command command = data.complete();
-                listeners.put(command.getFullCommandName(), new SlashCommandImpl(listener, command, slashCommand, method, null, false));
+                listeners.put(command.getFullCommandName(), new SlashCommandImpl(listener, command, slashCommand, method, null, null));
             }
         }
     }
@@ -134,15 +134,15 @@ public class SlashCommandManager implements SlashEvent {
         private final Object slashCommand;
         private final SlashCommand command;
         private final Method callMethod;
-        private final boolean subCommand;
+        private final SubCommandType subCommandType;
 
-        public SlashCommandImpl(SlashCommandListener listener, Object slashCommand, SlashCommand command, Method method, Command owner, boolean subCommand) {
+        public SlashCommandImpl(SlashCommandListener listener, Object slashCommand, SlashCommand command, Method method, Command owner, SubCommandType subCommandType) {
             this.listener = listener;
             this.slashCommand = slashCommand;
             this.command = command;
             this.callMethod = method;
             this.owner = owner;
-            this.subCommand = subCommand;
+            this.subCommandType = subCommandType;
         }
 
         public SlashCommandListener getListener() {
@@ -186,7 +186,7 @@ public class SlashCommandManager implements SlashEvent {
         }
 
         public boolean isSubCommand() {
-            return subCommand;
+            return subCommandType != null;
         }
     }
 }

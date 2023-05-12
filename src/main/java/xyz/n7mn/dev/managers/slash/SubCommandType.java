@@ -9,6 +9,7 @@ import xyz.n7mn.dev.HimuHimuMain;
 public enum SubCommandType {
     MUSIC(create("music"), null, false),
     EARTHQUAKE(create("earthquake"), null, false),
+    CASINO(create("casino"), null, false),
     SETTINGS(create("settings", Permission.ADMINISTRATOR), null, false),
     SETTINGS_EARTHQUAKE(SETTINGS, new SubcommandGroupData("earthquake", "EarthQuake Settings SubGroups"), true),
     SETTINGS_MUSIC(SETTINGS, new SubcommandGroupData("music", "Music Settings SubGroups"), true),

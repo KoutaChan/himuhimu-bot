@@ -11,7 +11,6 @@ import xyz.n7mn.dev.commands.earthquake.settings.EarthQuakeValueCommand;
 import xyz.n7mn.dev.commands.general.StatusCommand;
 import xyz.n7mn.dev.commands.music.*;
 import xyz.n7mn.dev.commands.other.HelpCommand;
-import xyz.n7mn.dev.commands.other.UserInfoCommand;
 import xyz.n7mn.dev.earthquake.EarthQuakeYahoo;
 import xyz.n7mn.dev.earthquake.EarthQuakeYahooMonitor;
 import xyz.n7mn.dev.events.MessageEventManager;
@@ -56,7 +55,6 @@ public class HimuHimuMain {
             SlashCommandManager.register(new MusicSkipCommand());
             SlashCommandManager.register(new MusicStopCommand());
             SlashCommandManager.register(new MusicVolumeCommand());
-            SlashCommandManager.register(new UserInfoCommand());
             SlashCommandManager.register(new EarthQuakeValueCommand());
             SlashCommandManager.register(new EarthQuakeResetCommand());
             SlashCommandManager.register(new EarthQuakeRegisterCommand());
