@@ -245,8 +245,7 @@ public class EarthQuakeYahooMonitor {
         }
 
         //remove if ended (todo: support gif) サイズが足りなくで挫折
-        messages.keySet().stream().filter(key -> reportIds.stream().noneMatch(key::equalsIgnoreCase))
-                .forEach(messages::remove);
+        messages.keySet().stream().filter(key -> reportIds.stream().noneMatch(key::equalsIgnoreCase)).forEach(messages::remove);
     }
 
     public static byte[] toByteArray(BufferedImage image) {
@@ -312,11 +311,9 @@ public class EarthQuakeYahooMonitor {
 
         if (isEarthQuake) {
             g2dInformation.setColor(Color.YELLOW);
-
             g2dInformation.drawString("現在地震速報が発表されています (予報)", startingPos, 65);
             JSONArray items = object.getJSONObject("hypoInfo").getJSONArray("items");
             g2dInformation.setColor(Color.WHITE);
-
             //2=325
             for (int i = 0; i < items.length() && i < 2; i++) {
                 JSONObject item = items.getJSONObject(i);
@@ -334,9 +331,7 @@ public class EarthQuakeYahooMonitor {
         } else {
             g2dInformation.drawString("現在地震速報は発表されていません", startingPos, 65);
         }
-
         g2dInformation.setColor(Color.YELLOW);
-
         for (int i = entries.size(); i > entries.size() - 10 && i > 0; i--) {
             Map.Entry<Pair<Double, Double>, Integer> entry = entries.get(i - 1);
 

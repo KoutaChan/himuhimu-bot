@@ -4,6 +4,8 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CommonUtils {
     public static <T> T onNull(T t, T orDefault) {
@@ -18,5 +20,11 @@ public class CommonUtils {
             e.printStackTrace();
         }
         return out.toByteArray();
+    }
+
+    public static String getProgressBar(long progress, long max) {
+        final String progressText = Stream.generate(() -> "▇").limit(progress).collect(Collectors.joining());
+        final String emptyProgressText = Stream.generate(() -> "—").limit(max - progress).collect(Collectors.joining());
+        return progressText + emptyProgressText;
     }
 }
