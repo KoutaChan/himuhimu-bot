@@ -14,14 +14,13 @@ import xyz.n7mn.dev.events.SlashEvent;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class SlashCommandManager implements SlashEvent {
-    private final static Map<String, SlashCommandImpl> listeners = new HashMap<>();
-
+    private final static Map<String, SlashCommandImpl> listeners = new LinkedHashMap<>();
 
     @Override
     public void onSlashCommandInteractionEvent(SlashCommandInteractionEvent event) {
@@ -59,7 +58,12 @@ public class SlashCommandManager implements SlashEvent {
                 CommandCreateAction data = HimuHimuMain.getJDA().upsertCommand(slashCommand.name(), slashCommand.description());
                 for (Option option : slashCommand.options()) {
                     if (option.type() != OptionType.UNKNOWN) {
-                        data.addOption(option.type(), option.name(), option.description(), option.required(), option.type().canSupportChoices() && option.autoComplete());
+                        OptionData optionData = new OptionData(option.type(), option.name(), option.description(), option.required(), option.autoComplete());
+                        for (StringChoice choice : option.stringChoices()) {
+                            //幸い、チョイスは現在Stringでしか使用していません。
+                            optionData.addChoice(choice.name(), choice.value());
+                        }
+                        data.addOptions(optionData);
                     }
                 }
                 Command command = data.complete();
@@ -111,7 +115,6 @@ public class SlashCommandManager implements SlashEvent {
                 OptionData optionData = new OptionData(option.type(), option.name(), option.description(), option.required(), option.autoComplete());
                 for (StringChoice choice : option.stringChoices()) {
                     //幸い、チョイスは現在Stringでしか使用していません。
-                    //なので現在はStringで検索可能です
                     optionData.addChoice(choice.name(), choice.value());
                 }
                 data.addOptions(optionData);
@@ -167,6 +170,10 @@ public class SlashCommandManager implements SlashEvent {
 
         public Method getCallMethod() {
             return callMethod;
+        }
+
+        public SubCommandType getSubCommandType() {
+            return subCommandType;
         }
 
         public void remove() {

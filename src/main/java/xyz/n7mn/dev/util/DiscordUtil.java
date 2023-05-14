@@ -51,7 +51,7 @@ public class DiscordUtil {
             case VOICE_MUTE_OTHERS -> "メンバーをミュート";
             case VOICE_DEAF_OTHERS -> "メンバーのスピーカーをミュート";
             case VOICE_MOVE_OTHERS -> "メンバーを移動";
-            // イベントの管理がまだJDAに追加されていません
+            case MANAGE_EVENTS -> "イベントの管理";
             case ADMINISTRATOR -> "管理者";
             case MANAGE_PERMISSIONS -> "権限の管理";
             case VIEW_GUILD_INSIGHTS -> "サーバーインサイトを見る";

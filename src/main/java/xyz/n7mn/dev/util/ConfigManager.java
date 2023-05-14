@@ -5,7 +5,6 @@ import java.nio.file.Path;
 import java.util.Map;
 
 public class ConfigManager {
-
     private final Map<String, String> config;
 
     public ConfigManager(Path path) {

@@ -111,8 +111,7 @@ public class EarthQuakeYahooMonitor {
         Date date = lastPing != 0 ? retry > 1
                 ? new Date(lastPing) : new Date(lastPing + 1000L)
                 //Sindo 4 Image 2022/11/09 17:40
-                : new Date(1667983225000L);
-                //: new Date(ZonedDateTime.ofInstant(Instant.now(), ZoneId.of("Asia/Tokyo")).toInstant().toEpochMilli());
+                : new Date(ZonedDateTime.ofInstant(Instant.now(), ZoneId.of("Asia/Tokyo")).toInstant().toEpochMilli());
 
         try {
             BufferedImage bufferedImage = new BufferedImage(base.getWidth(), base.getHeight(), BufferedImage.TYPE_INT_RGB);
@@ -131,6 +130,8 @@ public class EarthQuakeYahooMonitor {
             final boolean isEarthQuake = !jsonObject.isNull("hypoInfo");
             // 無駄に実行する必要はありません
             if (!isEarthQuake && this.queue.isEmpty()) {
+                //TODO: Clean Code
+                this.lastPing = date.getTime();
                 this.reset();
                 return;
             }
@@ -241,6 +242,7 @@ public class EarthQuakeYahooMonitor {
     }
 
     public void reset() {
+        this.retry = 0;
         removeAndTry(Collections.emptyList());
     }
 

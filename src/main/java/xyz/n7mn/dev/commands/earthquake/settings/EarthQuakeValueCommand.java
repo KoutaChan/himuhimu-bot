@@ -14,7 +14,12 @@ import java.awt.*;
 import java.util.Date;
 
 public class EarthQuakeValueCommand extends SlashCommandListener {
-    @SlashCommand(name = "value", description = "地震情報の設定", options = {@Option(type = OptionType.STRING, name = "type", description = "設定する内容", stringChoices = {@StringChoice(name = "リアルタイム地震情報", value = "realtime_earthquake_info"), @StringChoice(name = "地震情報", value = "earthquake_info")}), @Option(type = OptionType.STRING, name = "value", description = "設定", stringChoices = {@StringChoice(name = "オン", value = "on"), @StringChoice(name = "オフ", value = "off")}, required = false)}, commandType = SubCommandType.SETTINGS_EARTHQUAKE)
+    @SlashCommand(name = "value", description = "地震情報の設定", options = {
+            @Option(type = OptionType.STRING, name = "type", description = "設定する内容",
+                    stringChoices = {@StringChoice(name = "リアルタイム地震情報", value = "realtime_earthquake_info"), @StringChoice(name = "地震情報", value = "earthquake_info")}),
+            @Option(type = OptionType.STRING, name = "value", description = "設定",
+                    stringChoices = {@StringChoice(name = "オン", value = "on"), @StringChoice(name = "オフ", value = "off")}, required = false)}
+            , commandType = SubCommandType.SETTINGS_EARTHQUAKE)
     public void onSlashCommandEvent(SlashCommandInteractionEvent event) {
         EarthQuakeDB.EarthQuakeData data = SQLite.INSTANCE.getEarthQuake().get(event.getGuild().getId());
         if (data == null) {
@@ -22,16 +27,18 @@ public class EarthQuakeValueCommand extends SlashCommandListener {
             return;
         }
         String type = event.getOption("type", OptionMapping::getAsString);
-        String value = event.getOption("value", OptionMapping::getAsString);
-        Boolean valueBoolean = value == null ? null : value.equalsIgnoreCase("on");
-        if (type.equalsIgnoreCase("realtime_earthquake_info")) {
-            data.setAnnounceRealTime(valueBoolean == null ? !data.isAnnounceRealTime(): valueBoolean);
-        } else if (type.equalsIgnoreCase("earthquake_info")) {
-            data.setAnnounceInfo(valueBoolean == null ? !data.isAnnounceInfo() : valueBoolean);
-        } else {
-            event.getChannel().sendMessage("Unknown Error!").queue();
+        if (type != null) {
+            String value = event.getOption("value", OptionMapping::getAsString);
+            Boolean valueBoolean = value == null ? null : value.equalsIgnoreCase("on");
+            if (type.equalsIgnoreCase("realtime_earthquake_info")) {
+                data.setAnnounceRealTime(valueBoolean == null ? !data.isAnnounceRealTime() : valueBoolean);
+            } else if (type.equalsIgnoreCase("earthquake_info")) {
+                data.setAnnounceInfo(valueBoolean == null ? !data.isAnnounceInfo() : valueBoolean);
+            } else {
+                event.getChannel().sendMessage("Unknown Error!").queue();
+            }
+            data.update();
         }
-        data.update();
         event.replyEmbeds(createEmbeds(data)).queue();
     }
 

@@ -18,7 +18,7 @@ public class EarthQuakePrintCommand extends SlashCommandListener {
         event.deferReply().queue();
         HimuHimuMain.getEarthQuakeYahooMonitor().getQueue().add(image -> {
             event.getHook().editOriginalEmbeds(new EmbedBuilder()
-                            .setTitle("地震速報")
+                            .setTitle("Realtime Sindo")
                             .setDescription("大きな誤差・誤検知を含んでいる可能性があります")
                             .setFooter(DateFormat.getDateTimeInstance().format(new Date()) + "に作成されました | 防災科研（NIED）| Yahoo")
                             .setImage("attachment://earthquake.png").build())

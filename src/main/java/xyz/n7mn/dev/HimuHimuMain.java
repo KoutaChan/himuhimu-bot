@@ -32,7 +32,7 @@ public class HimuHimuMain {
         try {
             jda = JDABuilder.createDefault(configManager.getString("discord.token"), GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.GUILD_EMOJIS_AND_STICKERS, GatewayIntent.SCHEDULED_EVENTS)
                     .addEventListeners(new EventListener())
-                    .setActivity(Activity.playing("h.help all"))
+                    .setActivity(Activity.playing("/help | 2.0.0 - Supporting SlashCommand!"))
                     .build();
             if (configManager.getBoolean("enable.earthquake")) {
                 EarthQuakeYahoo.start(jda);
@@ -47,11 +47,13 @@ public class HimuHimuMain {
             //Command
             //全部のコマンドを消す: ディスコードは消してくれないため
             //安全のためスレッドを停止して登録させる、偉いよね？
+            //ただしこのせいでコマンド登録が遅れると思ってる？
             jda.retrieveCommands().complete().forEach(d -> d.delete().complete());
             SlashCommandManager.register(new HelpCommand());
             SlashCommandManager.register(new StatusCommand());
-            SlashCommandManager.register(new MusicRepeatCommand());
             SlashCommandManager.register(new MusicPlayCommand());
+            SlashCommandManager.register(new MusicRepeatCommand());
+            SlashCommandManager.register(new MusicNowPlayCommand());
             SlashCommandManager.register(new MusicSkipCommand());
             SlashCommandManager.register(new MusicStopCommand());
             SlashCommandManager.register(new MusicVolumeCommand());

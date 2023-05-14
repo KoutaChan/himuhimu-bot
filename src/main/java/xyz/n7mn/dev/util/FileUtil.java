@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 public class FileUtil {
-
     public static void copyFromResources(String source, Path destination) {
         if (!destination.toFile().exists()) {
             InputStream sources = FileUtil.class.getResourceAsStream("/" + source);

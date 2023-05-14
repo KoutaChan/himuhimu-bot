@@ -21,7 +21,6 @@ public class AudioManager {
         AudioSourceManagers.registerRemoteSources(manager);
     }
 
-
     public static AudioData createAudio(AudioType type, GuildMessageChannelUnion textChannel, AudioChannelUnion channel) {
         audio.put(textChannel.getGuild().getIdLong(), new AudioData(type, textChannel, channel));
         return getAudio(textChannel.getGuild());
