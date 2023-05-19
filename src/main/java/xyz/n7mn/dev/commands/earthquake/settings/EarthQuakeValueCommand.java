@@ -7,7 +7,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import xyz.n7mn.dev.managers.slash.StringChoice;
 import xyz.n7mn.dev.managers.slash.*;
-import xyz.n7mn.dev.sqlite.EarthQuakeDB;
+import xyz.n7mn.dev.sqlite.earthquake.EarthQuakeConnection;
 import xyz.n7mn.dev.sqlite.SQLite;
 
 import java.awt.*;
@@ -21,9 +21,9 @@ public class EarthQuakeValueCommand extends SlashCommandListener {
                     stringChoices = {@StringChoice(name = "オン", value = "on"), @StringChoice(name = "オフ", value = "off")}, required = false)}
             , commandType = SubCommandType.SETTINGS_EARTHQUAKE)
     public void onSlashCommandEvent(SlashCommandInteractionEvent event) {
-        EarthQuakeDB.EarthQuakeData data = SQLite.INSTANCE.getEarthQuake().get(event.getGuild().getId());
+        EarthQuakeConnection.EarthQuakeData data = SQLite.INSTANCE.getEarthQuake().get(event.getGuild().getId());
         if (data == null) {
-            event.reply("地震情報の通知を受け取る設定をしていないため削除できません！").setEphemeral(true).queue();
+            event.reply("地震情報の通知を受け取る設定をしていないため編集できません！").setEphemeral(true).queue();
             return;
         }
         String type = event.getOption("type", OptionMapping::getAsString);
@@ -42,7 +42,7 @@ public class EarthQuakeValueCommand extends SlashCommandListener {
         event.replyEmbeds(createEmbeds(data)).queue();
     }
 
-    public MessageEmbed createEmbeds(EarthQuakeDB.EarthQuakeData data) {
+    public MessageEmbed createEmbeds(EarthQuakeConnection.EarthQuakeData data) {
         return new EmbedBuilder()
                 .setTitle("アナウンス設定")
                 .setColor(Color.GREEN)

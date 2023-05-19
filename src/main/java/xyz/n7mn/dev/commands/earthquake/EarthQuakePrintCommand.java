@@ -15,15 +15,15 @@ import java.util.Date;
 public class EarthQuakePrintCommand extends SlashCommandListener {
     @SlashCommand(name = "print", description = "リアルタイムの地震情報をプリントします", commandType = SubCommandType.EARTHQUAKE)
     public void onSlashCommandEvent(SlashCommandInteractionEvent event) {
-        event.deferReply().queue();
-        HimuHimuMain.getEarthQuakeYahooMonitor().getQueue().add(image -> {
-            event.getHook().editOriginalEmbeds(new EmbedBuilder()
+        event.reply("しばらくお待ち下さい、現在生成中です").queue(message -> HimuHimuMain.getEarthQuakeYahooMonitor().getQueue().add(image -> {
+            message.editOriginal("").queue();
+            message.editOriginalEmbeds(new EmbedBuilder()
                             .setTitle("Realtime Sindo")
                             .setDescription("大きな誤差・誤検知を含んでいる可能性があります")
                             .setFooter(DateFormat.getDateTimeInstance().format(new Date()) + "に作成されました | 防災科研（NIED）| Yahoo")
                             .setImage("attachment://earthquake.png").build())
                     .setFiles(FileUpload.fromData(CommonUtils.toByteArray(image), "earthquake.png"))
                     .queue();
-        });
+        }));
     }
 }

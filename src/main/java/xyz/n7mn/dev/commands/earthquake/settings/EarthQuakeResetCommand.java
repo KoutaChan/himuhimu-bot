@@ -10,7 +10,7 @@ import xyz.n7mn.dev.managers.search.button.ButtonInteract;
 import xyz.n7mn.dev.managers.slash.SlashCommand;
 import xyz.n7mn.dev.managers.slash.SlashCommandListener;
 import xyz.n7mn.dev.managers.slash.SubCommandType;
-import xyz.n7mn.dev.sqlite.EarthQuakeDB;
+import xyz.n7mn.dev.sqlite.earthquake.EarthQuakeConnection;
 import xyz.n7mn.dev.sqlite.SQLite;
 
 import java.awt.*;
@@ -19,7 +19,7 @@ import java.awt.*;
 public class EarthQuakeResetCommand extends SlashCommandListener {
     @SlashCommand(name = "reset", description = "地震情報の通知を解除します", commandType = SubCommandType.SETTINGS_EARTHQUAKE)
     public void onSlashCommandEvent(SlashCommandInteractionEvent event) {
-        EarthQuakeDB.EarthQuakeData data = SQLite.INSTANCE.getEarthQuake().get(event.getGuild().getId());
+        EarthQuakeConnection.EarthQuakeData data = SQLite.INSTANCE.getEarthQuake().get(event.getGuild().getId());
         if (data == null) {
             event.reply("地震情報の通知を受け取る設定をしていないため削除できません！").setEphemeral(true).queue();
             return;
@@ -36,7 +36,7 @@ public class EarthQuakeResetCommand extends SlashCommandListener {
 
     @ButtonInteract(regex = "earthquake-reset")
     public void onEarthQuakeReset(ButtonInteractionEvent event) {
-        EarthQuakeDB.EarthQuakeData data = SQLite.INSTANCE.getEarthQuake().get(event.getGuild().getId());
+        EarthQuakeConnection.EarthQuakeData data = SQLite.INSTANCE.getEarthQuake().get(event.getGuild().getId());
         if (data == null) {
             event.reply("地震情報の通知を受け取る設定をしていないため削除できません！").setEphemeral(true).queue();
             return;

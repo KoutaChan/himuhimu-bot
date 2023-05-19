@@ -1,15 +1,22 @@
-package xyz.n7mn.dev.sqlite;
+package xyz.n7mn.dev.sqlite.earthquake;
 
-import lombok.Getter;
-import lombok.Setter;
+import xyz.n7mn.dev.sqlite.SQLiteUtils;
 
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.sql.Connection;
 
-public class EarthQuakeDB {
+public class EarthQuakeConnection extends SQLiteUtils {
+    protected final static Connection connection = createConnection("earthquake");
+
+    /*public EarthQuakeDB() {
+        try {
+            this.connection = DriverManager.getConnection("jdbc:sqlite:earthquake.db");
+            Statement statement = connection.createStatement();
+            statement.executeUpdate("CREATE TABLE IF NOT EXISTS REALTIME_EARTHQUAKE ()")
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     public EarthQuakeDB() {
         Connection connection = null;
         try {
@@ -81,12 +88,11 @@ public class EarthQuakeDB {
 
         try {
             connection = DriverManager.getConnection("jdbc:sqlite:botdata.db");
-
             PreparedStatement prepareStatement = connection.prepareStatement("update earthquake set channel = ?, realtime = ?, yahoo = ? where guild = ?");
             prepareStatement.setString(1, channel);
-            prepareStatement.setString(2, guild);
-            prepareStatement.setBoolean(3, announceRealTime);
-            prepareStatement.setBoolean(4, announceInfo);
+            prepareStatement.setBoolean(2, announceRealTime);
+            prepareStatement.setBoolean(3, announceInfo);
+            prepareStatement.setString(4, guild);
             prepareStatement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -127,7 +133,7 @@ public class EarthQuakeDB {
             Statement statement = connection.createStatement();
             ResultSet rs = statement.executeQuery("select * from earthquake");
             while (rs.next()) {
-                earthQuake.add(new EarthQuakeData(rs.getString(1), rs.getString(2), rs.getBoolean(4), rs.getBoolean(4)));
+                earthQuake.add(new EarthQuakeData(rs.getString(1), rs.getString(2), rs.getBoolean(3), rs.getBoolean(4)));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -184,5 +190,5 @@ public class EarthQuakeDB {
         public void remove() {
             SQLite.INSTANCE.getEarthQuake().delete(guild);
         }
-    }
+    }*/
 }

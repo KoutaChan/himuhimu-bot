@@ -54,7 +54,7 @@ public class HelpCommand extends SlashCommandListener {
                 // SlashCommandは SubCommand と Command どっちかが含まれているのでこういう処理になる。
                 if (rawObject instanceof SubcommandData subcommandData) {
                     for (OptionData option : subcommandData.getOptions()) {
-                        produced.append(" [").append(option.getDescription()).append("]");
+                        produced.append(" [").append((option.isRequired() ? "(R) " : "(O) ")).append(option.getDescription()).append("]");
                     }
                 } else if (rawObject instanceof Command command) {
                     for (Command.Option option : command.getOptions()) {

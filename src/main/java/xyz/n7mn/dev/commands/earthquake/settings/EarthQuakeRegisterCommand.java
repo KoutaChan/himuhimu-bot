@@ -23,7 +23,7 @@ import xyz.n7mn.dev.managers.slash.Option;
 import xyz.n7mn.dev.managers.slash.SlashCommand;
 import xyz.n7mn.dev.managers.slash.SlashCommandListener;
 import xyz.n7mn.dev.managers.slash.SubCommandType;
-import xyz.n7mn.dev.sqlite.EarthQuakeDB;
+import xyz.n7mn.dev.sqlite.earthquake.EarthQuakeConnection;
 import xyz.n7mn.dev.sqlite.SQLite;
 
 import java.awt.*;
@@ -54,7 +54,7 @@ public class EarthQuakeRegisterCommand extends SlashCommandListener {
             event.replyEmbeds(getErrorEmbeds("登録できないチャンネルタイプです").build()).queue();
             return;
         }
-        EarthQuakeDB.EarthQuakeData data = SQLite.INSTANCE.getEarthQuake().get(event.getGuild().getId());
+        EarthQuakeConnection.EarthQuakeData data = SQLite.INSTANCE.getEarthQuake().get(event.getGuild().getId());
         if (data == null) {
             SQLite.INSTANCE.getEarthQuake().insert(event.getGuild().getId(), channel.getId());
             event.replyEmbeds(new EmbedBuilder()
@@ -88,7 +88,7 @@ public class EarthQuakeRegisterCommand extends SlashCommandListener {
         if (fieldOptional.isPresent()) {
             StandardGuildMessageChannel channel = event.getGuild().getChannelById(StandardGuildMessageChannel.class, getChannel(fieldOptional.get().getValue()));
             if (channel != null) {
-                EarthQuakeDB.EarthQuakeData data = SQLite.INSTANCE.getEarthQuake().get(event.getGuild().getId());
+                EarthQuakeConnection.EarthQuakeData data = SQLite.INSTANCE.getEarthQuake().get(event.getGuild().getId());
                 if (data == null) {
                     SQLite.INSTANCE.getEarthQuake().insert(event.getGuild().getId(), channel.getId());
                 } else {
@@ -125,7 +125,7 @@ public class EarthQuakeRegisterCommand extends SlashCommandListener {
             event.replyEmbeds(getErrorEmbeds("登録できないチャンネルタイプです").build()).queue();
             return;
         }
-        EarthQuakeDB.EarthQuakeData data = SQLite.INSTANCE.getEarthQuake().get(event.getGuild().getId());
+        EarthQuakeConnection.EarthQuakeData data = SQLite.INSTANCE.getEarthQuake().get(event.getGuild().getId());
         if (data == null) {
             SQLite.INSTANCE.getEarthQuake().insert(event.getGuild().getId(), channel.getId());
             event.replyEmbeds(new EmbedBuilder()

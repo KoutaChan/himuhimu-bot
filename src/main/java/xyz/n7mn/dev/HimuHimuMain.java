@@ -2,6 +2,7 @@ package xyz.n7mn.dev;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import xyz.n7mn.dev.commands.earthquake.EarthQuakePrintCommand;
@@ -24,7 +25,6 @@ import java.nio.file.Paths;
 
 public class HimuHimuMain {
     public static ConfigManager configManager = new ConfigManager("config.properties", Paths.get("", "config.properties").toAbsolutePath());
-
     public static EarthQuakeYahooMonitor earthQuakeYahooMonitor;
     private static JDA jda;
 
@@ -32,15 +32,9 @@ public class HimuHimuMain {
         try {
             jda = JDABuilder.createDefault(configManager.getString("discord.token"), GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.GUILD_EMOJIS_AND_STICKERS, GatewayIntent.SCHEDULED_EVENTS)
                     .addEventListeners(new EventListener())
-                    .setActivity(Activity.playing("/help | 2.0.0 - Supporting SlashCommand!"))
+                    .setStatus(OnlineStatus.IDLE)
+                    .setActivity(Activity.playing("Starting up | 2.0.0 - Supporting SlashCommand!"))
                     .build();
-            if (configManager.getBoolean("enable.earthquake")) {
-                EarthQuakeYahoo.start(jda);
-            }
-            if (configManager.getBoolean("enable.earthquake.nied")) {
-                earthQuakeYahooMonitor = new EarthQuakeYahooMonitor(jda);
-                earthQuakeYahooMonitor.startNewThread();
-            }
             //Listeners - HimuHimu Base
             MessageEventManager.addListener(new MessageCommandManager(), new AddCoinManager());
             SlashEventManager.addListener(new SlashCommandManager());
@@ -61,6 +55,15 @@ public class HimuHimuMain {
             SlashCommandManager.register(new EarthQuakeResetCommand());
             SlashCommandManager.register(new EarthQuakeRegisterCommand());
             SlashCommandManager.register(new EarthQuakePrintCommand());
+            if (configManager.getBoolean("enable.earthquake")) {
+                EarthQuakeYahoo.start(jda);
+            }
+            if (configManager.getBoolean("enable.earthquake.nied")) {
+                earthQuakeYahooMonitor = new EarthQuakeYahooMonitor(jda);
+                earthQuakeYahooMonitor.startNewThread();
+            }
+            jda.getPresence().setStatus(OnlineStatus.ONLINE);
+            jda.getPresence().setActivity(Activity.playing("/help | 2.0.0 - Supporting SlashCommand!"));
         } catch (Exception e) {
             e.printStackTrace();
         }
